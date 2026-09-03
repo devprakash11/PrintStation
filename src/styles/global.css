@@ -1,78 +1,453 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+/* =========================================================
+   PRINTSTATION — GLOBAL STYLES
+   ---------------------------------------------------------
+   01. Font Imports
+   02. Design Tokens
+   03. CSS Reset
+   04. Base Elements
+   05. Layout Utilities
+   06. Reusable Buttons
+   07. Branding
+   08. Header / Navbar
+   09. Footer
+   10. Responsive Styles
+   11. Accessibility / Motion
+   ========================================================= */
+
+
+/* =========================================================
+   01. FONT IMPORTS
+   ========================================================= */
+
+@import url(
+  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap'
+);
+
+
+/* =========================================================
+   02. DESIGN TOKENS
+   ========================================================= */
 
 :root {
-  --ink: #171717;
-  --ink-soft: #525252;
-  --muted: #737373;
-  --paper: #fafaf9;
-  --surface: #ffffff;
-  --line: #e7e5e4;
-  --accent: #e85d2a;
-  --accent-dark: #c94a1d;
-  --accent-soft: #fff1eb;
-  --success: #198754;
-  --container: 1200px;
+  /* ---------- Colors ---------- */
+
+  --color-ink: #171717;
+  --color-ink-soft: #525252;
+  --color-muted: #737373;
+
+  --color-paper: #fafaf9;
+  --color-surface: #ffffff;
+
+  --color-line: #e7e5e4;
+
+  --color-accent: #e85d2a;
+  --color-accent-dark: #c94a1d;
+  --color-accent-soft: #fff1eb;
+
+  --color-success: #198754;
+
+
+  /* ---------- Typography ---------- */
+
+  --font-body: 'DM Sans', sans-serif;
+  --font-heading: 'Manrope', sans-serif;
+
+
+  /* ---------- Layout ---------- */
+
+  --container-width: 1200px;
+
+  --page-padding-desktop: 24px;
+  --page-padding-mobile: 16px;
+
+
+  /* ---------- Border Radius ---------- */
+
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --shadow-soft: 0 16px 50px rgba(23, 23, 23, 0.08);
+
+
+  /* ---------- Shadows ---------- */
+
+  --shadow-soft:
+    0 16px 50px rgba(23, 23, 23, 0.08);
+
+  --shadow-button:
+    0 3px 14px rgba(23, 23, 23, 0.04);
+
+  --shadow-button-hover:
+    0 7px 20px rgba(23, 23, 23, 0.08);
+
+
+  /* ---------- Transitions ---------- */
+
+  --transition-fast:
+    0.2s ease;
+
+  --transition-default:
+    0.25s ease;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0;
-  min-width: 320px;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: 'DM Sans', sans-serif;
-  -webkit-font-smoothing: antialiased;
+
+/* =========================================================
+   03. CSS RESET
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-a { color: inherit; text-decoration: none; }
-button, a { -webkit-tap-highlight-color: transparent; }
-button, input { font: inherit; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+
+  background: var(--color-paper);
+  color: var(--color-ink);
+
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* =========================================================
+   04. BASE ELEMENTS
+   ========================================================= */
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+}
+
+
+/* =========================================================
+   05. LAYOUT UTILITIES
+   ========================================================= */
+
 .container {
-  width: min(var(--container), calc(100% - 48px));
+  width: min(
+    var(--container-width),
+    calc(100% - (var(--page-padding-desktop) * 2))
+  );
+
   margin-inline: auto;
 }
+
+
+/* =========================================================
+   06. REUSABLE BUTTONS
+   ========================================================= */
+
 .primary-button,
 .admin-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   gap: 9px;
+
   border-radius: 12px;
+
   font-weight: 700;
-  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
+
+
+/* ---------- Button Focus ---------- */
+
 .primary-button:focus-visible,
 .admin-button:focus-visible,
-.brand-logo:focus-visible { outline: 3px solid rgba(232,93,42,.28); outline-offset: 4px; }
-.primary-button:hover,
-.admin-button:hover { transform: translateY(-2px); }
-.site-header { position: relative; z-index: 10; }
-.navbar { min-height: 84px; display: flex; align-items: center; justify-content: space-between; }
-.brand-logo { display: inline-flex; align-items: center; gap: 10px; font-family: 'Manrope', sans-serif; font-weight: 800; letter-spacing: -.04em; }
-.brand-mark { display: grid; width: 38px; height: 38px; place-items: center; color: var(--accent); }
-.brand-mark svg { width: 100%; height: 100%; }
-.brand-name { font-size: 19px; }
-.admin-button { min-height: 42px; padding: 0 16px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; box-shadow: 0 3px 14px rgba(23,23,23,.04); }
-.admin-button:hover { border-color: #d6d3d1; box-shadow: 0 7px 20px rgba(23,23,23,.08); }
-.site-footer { border-top: 1px solid var(--line); background: rgba(255,255,255,.65); }
-.footer-inner { min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.footer-inner .brand-logo { transform: scale(.92); transform-origin: left center; }
-.footer-inner p { margin: 0; color: var(--muted); font-size: 13px; }
-
-@media (max-width: 639px) {
-  .container { width: min(100% - 32px, var(--container)); }
-  .navbar { min-height: 72px; }
-  .brand-mark { width: 34px; height: 34px; }
-  .brand-name { font-size: 17px; }
-  .admin-button { min-height: 40px; padding-inline: 13px; }
-  .footer-inner { min-height: 108px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; }
+.brand-logo:focus-visible {
+  outline: 3px solid rgba(232, 93, 42, 0.28);
+  outline-offset: 4px;
 }
 
+
+/* ---------- Button Hover ---------- */
+
+.primary-button:hover,
+.admin-button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   07. BRANDING
+   ========================================================= */
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.brand-mark {
+  display: grid;
+
+  width: 38px;
+  height: 38px;
+
+  place-items: center;
+
+  color: var(--color-accent);
+}
+
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-name {
+  font-size: 19px;
+  line-height: 1;
+}
+
+
+/* =========================================================
+   08. HEADER / NAVBAR
+   ========================================================= */
+
+.site-header {
+  position: relative;
+  z-index: 10;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 84px;
+}
+
+
+/* ---------- Admin Button ---------- */
+
+.admin-button {
+  min-height: 42px;
+
+  padding-inline: 16px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+
+  background: var(--color-surface);
+
+  font-size: 14px;
+
+  box-shadow: var(--shadow-button);
+}
+
+.admin-button:hover {
+  border-color: #d6d3d1;
+  box-shadow: var(--shadow-button-hover);
+}
+
+
+/* =========================================================
+   09. FOOTER
+   ========================================================= */
+
+.site-footer {
+  border-top: 1px solid var(--color-line);
+
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 88px;
+
+  gap: 20px;
+}
+
+
+/* ---------- Footer Branding ---------- */
+
+.footer-inner .brand-logo {
+  transform: scale(0.92);
+  transform-origin: left center;
+}
+
+
+/* ---------- Footer Copyright ---------- */
+
+.footer-inner p {
+  margin: 0;
+
+  color: var(--color-muted);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   10. RESPONSIVE STYLES
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   Mobile
+   < 640px
+   --------------------------------------------------------- */
+
+@media (max-width: 639px) {
+
+  .container {
+    width: min(
+      100% - (var(--page-padding-mobile) * 2),
+      var(--container-width)
+    );
+  }
+
+
+  /* ---------- Navbar ---------- */
+
+  .navbar {
+    min-height: 72px;
+  }
+
+
+  /* ---------- Branding ---------- */
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+
+  /* ---------- Admin Button ---------- */
+
+  .admin-button {
+    min-height: 40px;
+    padding-inline: 13px;
+  }
+
+
+  /* ---------- Footer ---------- */
+
+  .footer-inner {
+    flex-direction: column;
+
+    align-items: flex-start;
+    justify-content: center;
+
+    min-height: 108px;
+
+    gap: 8px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Tablet
+   640px – 1023px
+   --------------------------------------------------------- */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+
+  .container {
+    width: min(
+      var(--container-width),
+      calc(100% - 40px)
+    );
+  }
+
+  .navbar {
+    min-height: 78px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Large Desktop
+   1440px+
+   --------------------------------------------------------- */
+
+@media (min-width: 1440px) {
+
+  .container {
+    width: min(
+      var(--container-width),
+      calc(100% - 64px)
+    );
+  }
+}
+
+
+/* =========================================================
+   11. ACCESSIBILITY / REDUCED MOTION
+   ========================================================= */
+
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
