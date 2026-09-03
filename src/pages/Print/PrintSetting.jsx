@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
 import {
   Check,
   ChevronDown,
@@ -14,6 +15,11 @@ import {
   X,
 } from 'lucide-react';
 import '../../styles/multiFilePreview.css';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 const PAPER_SIZES = [
   { value: 'A4', label: 'A4', dimensions: '210 × 297 mm', width: 210, height: 297 },
@@ -31,24 +37,11 @@ const PAPER_SIZES = [
 ];
 
 const getPdfPageCount = async (file) => {
-  try {
-    const buffer = await file.arrayBuffer();
-    const text = new TextDecoder('latin1').decode(new Uint8Array(buffer));
-
-    const countMatches = [...text.matchAll(/\/Count\s+(\d+)/g)]
-      .map((match) => Number(match[1]))
-      .filter((count) => Number.isInteger(count) && count > 0 && count <= 10000);
-
-    if (countMatches.length > 0) {
-      return Math.max(...countMatches);
-    }
-
-    const pageMatches = text.match(/\/Type\s*\/Page\b/g);
-    return Math.max(1, pageMatches?.length || 1);
-  } catch (error) {
-    console.error('Unable to determine PDF page count:', error);
-    return 1;
-  }
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const count = pdf.numPages;
+  await pdf.destroy();
+  return count;
 };
 
 const formatFileSize = (bytes) => {
@@ -80,6 +73,7 @@ export default function PrintSetting({
 }) {
   const [isPaperMenuOpen, setIsPaperMenuOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+  const [isPageCountLoading, setIsPageCountLoading] = useState(false);
   const [zoom, setZoom] = useState(1);
   const paperSizeRef = useRef(null);
 
@@ -87,14 +81,12 @@ export default function PrintSetting({
     const handleOutsideClick = (event) => {
       if (!paperSizeRef.current?.contains(event.target)) setIsPaperMenuOpen(false);
     };
-
     const handleEscape = (event) => {
       if (event.key === 'Escape') setIsPaperMenuOpen(false);
     };
 
     document.addEventListener('mousedown', handleOutsideClick);
     document.addEventListener('keydown', handleEscape);
-
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('keydown', handleEscape);
@@ -107,23 +99,27 @@ export default function PrintSetting({
     const loadPageCount = async () => {
       if (!file) return;
 
+      setZoom(1);
+      setPreviewPage(1);
+
       if (file.type !== 'application/pdf') {
         setPageCount(1);
-        setPreviewPage(1);
         return;
       }
 
-      const count = await getPdfPageCount(file);
-
-      if (!cancelled) {
-        setPageCount(count);
-        setPreviewPage((page) => Math.min(Math.max(1, page), count));
+      setIsPageCountLoading(true);
+      try {
+        const count = await getPdfPageCount(file);
+        if (!cancelled) setPageCount(Math.max(1, count));
+      } catch (error) {
+        console.error('Unable to determine PDF page count:', error);
+        if (!cancelled) setPageCount(1);
+      } finally {
+        if (!cancelled) setIsPageCountLoading(false);
       }
     };
 
     loadPageCount();
-    setZoom(1);
-
     return () => {
       cancelled = true;
     };
@@ -137,6 +133,7 @@ export default function PrintSetting({
   const paperHeight = orientation === 'portrait' ? selectedPaper.height : selectedPaper.width;
 
   const goToPage = (page) => {
+    if (!isPdf || isPageCountLoading) return;
     setPreviewPage(Math.min(pageCount, Math.max(1, page)));
   };
 
@@ -151,48 +148,33 @@ export default function PrintSetting({
     setPreviewPage(1);
   };
 
+  const previousDisabled = !isPdf || isPageCountLoading || previewPage <= 1;
+  const nextDisabled = !isPdf || isPageCountLoading || previewPage >= pageCount;
+
   return (
     <section className="document-workspace">
       <div className="document-preview-panel">
         <div className="workspace-header">
           <div className="workspace-file-meta">
-            <span className="workspace-file-icon" aria-hidden="true">
-              <FileText size={17} />
-            </span>
+            <span className="workspace-file-icon" aria-hidden="true"><FileText size={17} /></span>
             <div>
               <strong title={file.name}>{file.name}</strong>
               <small>
-                {formatFileSize(file.size)}
-                <span aria-hidden="true">•</span>
-                {pageCount} {pageCount === 1 ? 'Page' : 'Pages'}
+                {formatFileSize(file.size)} <span aria-hidden="true">•</span>{' '}
+                {isPageCountLoading ? 'Reading pages…' : `${pageCount} ${pageCount === 1 ? 'Page' : 'Pages'}`}
               </small>
             </div>
           </div>
 
           <div className="preview-toolbar">
-            <button
-              type="button"
-              onClick={() => setZoom((value) => Math.max(0.8, Number((value - 0.1).toFixed(1))))}
-              disabled={zoom <= 0.8}
-              aria-label="Zoom out"
-            >
+            <button type="button" onClick={() => setZoom((value) => Math.max(0.8, Number((value - 0.1).toFixed(1))))} disabled={zoom <= 0.8} aria-label="Zoom out">
               <ZoomOut size={17} />
             </button>
             <span>{Math.round(zoom * 100)}%</span>
-            <button
-              type="button"
-              onClick={() => setZoom((value) => Math.min(1.4, Number((value + 0.1).toFixed(1))))}
-              disabled={zoom >= 1.4}
-              aria-label="Zoom in"
-            >
+            <button type="button" onClick={() => setZoom((value) => Math.min(1.4, Number((value + 0.1).toFixed(1))))} disabled={zoom >= 1.4} aria-label="Zoom in">
               <ZoomIn size={17} />
             </button>
-            <button
-              type="button"
-              className="preview-remove-button"
-              onClick={onRemove}
-              aria-label="Remove document"
-            >
+            <button type="button" className="preview-remove-button" onClick={onRemove} aria-label="Remove document">
               <X size={17} />
             </button>
           </div>
@@ -202,7 +184,7 @@ export default function PrintSetting({
           <button
             type="button"
             className="preview-arrow preview-arrow-left"
-            disabled={!isPdf || previewPage <= 1}
+            disabled={previousDisabled}
             onClick={() => goToPage(previewPage - 1)}
             aria-label="Previous page"
           >
@@ -211,11 +193,7 @@ export default function PrintSetting({
 
           <div
             className={`document-preview-paper preview-${orientation}`}
-            style={{
-              '--paper-width': paperWidth,
-              '--paper-height': paperHeight,
-              '--preview-scale': zoom,
-            }}
+            style={{ '--paper-width': paperWidth, '--paper-height': paperHeight, '--preview-scale': zoom }}
           >
             {isPdf ? (
               <iframe
@@ -225,21 +203,17 @@ export default function PrintSetting({
                 className="pdf-preview"
               />
             ) : (
-              <img
-                src={previewUrl}
-                alt="Uploaded document preview"
-                className="image-preview"
-              />
+              <img src={previewUrl} alt="Uploaded document preview" className="image-preview" />
             )}
             <span className="preview-page-badge">
-              Page {previewPage} of {pageCount}
+              {isPageCountLoading ? `Page ${previewPage}` : `Page ${previewPage} of ${pageCount}`}
             </span>
           </div>
 
           <button
             type="button"
             className="preview-arrow preview-arrow-right"
-            disabled={!isPdf || previewPage >= pageCount}
+            disabled={nextDisabled}
             onClick={() => goToPage(previewPage + 1)}
             aria-label="Next page"
           >
@@ -251,7 +225,6 @@ export default function PrintSetting({
           {files.map(({ file: thumbnailFile, previewUrl: thumbnailUrl }, index) => {
             const isActive = index === activeFileIndex;
             const thumbnailIsPdf = thumbnailFile.type === 'application/pdf';
-
             return (
               <button
                 key={`${thumbnailFile.name}-${thumbnailFile.size}-${thumbnailFile.lastModified}`}
@@ -263,11 +236,7 @@ export default function PrintSetting({
               >
                 <span className="preview-thumbnail-paper">
                   {thumbnailIsPdf ? (
-                    <iframe
-                      title={`${thumbnailFile.name} thumbnail`}
-                      src={`${thumbnailUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
-                      tabIndex="-1"
-                    />
+                    <iframe title={`${thumbnailFile.name} thumbnail`} src={`${thumbnailUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`} tabIndex="-1" />
                   ) : (
                     <img src={thumbnailUrl} alt="" />
                   )}
@@ -289,49 +258,23 @@ export default function PrintSetting({
         <div className="option-section">
           <span className="option-label"><Files size={16} /> Pages</span>
           <div className="option-segmented">
-            <button type="button" className={pages === 'all' ? 'active' : ''} onClick={() => setPages('all')}>
-              All
-            </button>
-            <button type="button" className={pages === 'custom' ? 'active' : ''} onClick={() => setPages('custom')}>
-              Custom
-            </button>
+            <button type="button" className={pages === 'all' ? 'active' : ''} onClick={() => setPages('all')}>All</button>
+            <button type="button" className={pages === 'custom' ? 'active' : ''} onClick={() => setPages('custom')}>Custom</button>
           </div>
           {pages === 'custom' && (
-            <input
-              className="custom-pages-input"
-              value={customPages}
-              onChange={(event) => setCustomPages(event.target.value.replace(/[^0-9,\- ]/g, ''))}
-              placeholder="e.g. 1, 3-5, 8"
-              aria-label="Custom pages"
-            />
+            <input className="custom-pages-input" value={customPages} onChange={(event) => setCustomPages(event.target.value.replace(/[^0-9,\- ]/g, ''))} placeholder="e.g. 1, 3-5, 8" aria-label="Custom pages" />
           )}
           <small className="option-help">
-            {pages === 'all'
-              ? `Print all ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.`
-              : 'Enter page numbers or ranges separated by commas.'}
+            {pages === 'all' ? `Print all ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.` : 'Enter page numbers or ranges separated by commas.'}
           </small>
         </div>
 
         <div className="option-section">
           <span className="option-label"><Copy size={16} /> Copies</span>
           <div className="copies-control">
-            <button
-              type="button"
-              disabled={copies <= 1}
-              onClick={() => setCopies((count) => Math.max(1, count - 1))}
-              aria-label="Decrease copies"
-            >
-              <Minus size={17} />
-            </button>
+            <button type="button" disabled={copies <= 1} onClick={() => setCopies((count) => Math.max(1, count - 1))} aria-label="Decrease copies"><Minus size={17} /></button>
             <strong>{copies}</strong>
-            <button
-              type="button"
-              disabled={copies >= 99}
-              onClick={() => setCopies((count) => Math.min(99, count + 1))}
-              aria-label="Increase copies"
-            >
-              <Plus size={17} />
-            </button>
+            <button type="button" disabled={copies >= 99} onClick={() => setCopies((count) => Math.min(99, count + 1))} aria-label="Increase copies"><Plus size={17} /></button>
           </div>
           <small className="option-help">Choose from 1 to 99 copies.</small>
         </div>
@@ -339,123 +282,54 @@ export default function PrintSetting({
         <div className="option-section">
           <span className="option-label">Print Color</span>
           <div className="option-segmented color-mode-control">
-            <button type="button" className={colorMode === 'color' ? 'active' : ''} onClick={() => setColorMode('color')}>
-              Color
-            </button>
-            <button type="button" className={colorMode === 'bw' ? 'active' : ''} onClick={() => setColorMode('bw')}>
-              B&amp;W
-            </button>
+            <button type="button" className={colorMode === 'color' ? 'active' : ''} onClick={() => setColorMode('color')}>Color</button>
+            <button type="button" className={colorMode === 'bw' ? 'active' : ''} onClick={() => setColorMode('bw')}>B&amp;W</button>
           </div>
-          <small className="option-help">
-            {colorMode === 'color' ? 'Print the document in full color.' : 'Print the document in black and white.'}
-          </small>
+          <small className="option-help">{colorMode === 'color' ? 'Print the document in full color.' : 'Print the document in black and white.'}</small>
         </div>
 
         <div className="option-section paper-size-section">
           <span className="option-label">Paper Size</span>
           <div className="paper-size-field" ref={paperSizeRef}>
-            <button
-              type="button"
-              className={`paper-size-trigger ${isPaperMenuOpen ? 'is-open' : ''}`}
-              onClick={() => setIsPaperMenuOpen((open) => !open)}
-              aria-haspopup="listbox"
-              aria-expanded={isPaperMenuOpen}
-            >
-              <span className="paper-size-trigger-text">
-                <strong>{selectedPaper.label}</strong>
-                <span>{selectedPaper.dimensions}</span>
-              </span>
-              <ChevronDown
-                size={19}
-                className={`paper-size-chevron ${isPaperMenuOpen ? 'is-open' : ''}`}
-              />
+            <button type="button" className={`paper-size-trigger ${isPaperMenuOpen ? 'is-open' : ''}`} onClick={() => setIsPaperMenuOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={isPaperMenuOpen}>
+              <span className="paper-size-trigger-text"><strong>{selectedPaper.label}</strong><span>{selectedPaper.dimensions}</span></span>
+              <ChevronDown size={19} className={`paper-size-chevron ${isPaperMenuOpen ? 'is-open' : ''}`} />
             </button>
-
             {isPaperMenuOpen && (
               <div className="paper-size-menu" role="listbox" aria-label="Paper size options">
                 {PAPER_SIZES.map((paper) => {
                   const isSelected = paper.value === selectedPaper.value;
-
                   return (
-                    <button
-                      key={paper.value}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      className={`paper-size-option ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => handlePaperSizeChange(paper.value)}
-                    >
-                      <span className="paper-size-option-icon" aria-hidden="true">
-                        <FileText size={23} strokeWidth={1.7} />
-                      </span>
+                    <button key={paper.value} type="button" role="option" aria-selected={isSelected} className={`paper-size-option ${isSelected ? 'is-selected' : ''}`} onClick={() => handlePaperSizeChange(paper.value)}>
+                      <span className="paper-size-option-icon" aria-hidden="true"><FileText size={23} strokeWidth={1.7} /></span>
                       <span className="paper-size-option-name">{paper.label}</span>
                       <span className="paper-size-option-dimensions">{paper.dimensions}</span>
-                      {isSelected && (
-                        <span className="paper-size-option-check" aria-hidden="true">
-                          <Check size={19} strokeWidth={2.5} />
-                        </span>
-                      )}
+                      {isSelected && <span className="paper-size-option-check" aria-hidden="true"><Check size={19} strokeWidth={2.5} /></span>}
                     </button>
                   );
                 })}
               </div>
             )}
           </div>
-          <small className="option-help">
-            {selectedPaper.label}: {selectedPaper.dimensions}
-          </small>
+          <small className="option-help">{selectedPaper.label}: {selectedPaper.dimensions}</small>
         </div>
 
         <div className="option-section">
           <span className="option-label">Orientation</span>
           <div className="option-segmented orientation-control">
-            <button
-              type="button"
-              className={orientation === 'portrait' ? 'active' : ''}
-              onClick={() => setOrientation('portrait')}
-              aria-pressed={orientation === 'portrait'}
-            >
-              Portrait
-            </button>
-            <button
-              type="button"
-              className={orientation === 'landscape' ? 'active' : ''}
-              onClick={() => setOrientation('landscape')}
-              aria-pressed={orientation === 'landscape'}
-            >
-              Landscape
-            </button>
+            <button type="button" className={orientation === 'portrait' ? 'active' : ''} onClick={() => setOrientation('portrait')} aria-pressed={orientation === 'portrait'}>Portrait</button>
+            <button type="button" className={orientation === 'landscape' ? 'active' : ''} onClick={() => setOrientation('landscape')} aria-pressed={orientation === 'landscape'}>Landscape</button>
           </div>
-          <small className="option-help">
-            {orientation === 'portrait' ? 'Print vertically on the page.' : 'Print horizontally on the page.'}
-          </small>
+          <small className="option-help">{orientation === 'portrait' ? 'Print vertically on the page.' : 'Print horizontally on the page.'}</small>
         </div>
 
         <div className="print-summary">
-          <div>
-            <span>Document</span>
-            <strong title={file.name}>{file.name}</strong>
-          </div>
-          <div>
-            <span>Pages</span>
-            <strong>{pages === 'all' ? `All (${pageCount})` : customPages || 'Custom'}</strong>
-          </div>
-          <div>
-            <span>Copies</span>
-            <strong>{copies}</strong>
-          </div>
-          <div>
-            <span>Color</span>
-            <strong>{colorMode === 'color' ? 'Color' : 'B&W'}</strong>
-          </div>
-          <div>
-            <span>Paper</span>
-            <strong>{selectedPaper.label}</strong>
-          </div>
-          <div>
-            <span>Orientation</span>
-            <strong>{orientation === 'portrait' ? 'Portrait' : 'Landscape'}</strong>
-          </div>
+          <div><span>Document</span><strong title={file.name}>{file.name}</strong></div>
+          <div><span>Pages</span><strong>{pages === 'all' ? `All (${pageCount})` : customPages || 'Custom'}</strong></div>
+          <div><span>Copies</span><strong>{copies}</strong></div>
+          <div><span>Color</span><strong>{colorMode === 'color' ? 'Color' : 'B&W'}</strong></div>
+          <div><span>Paper</span><strong>{selectedPaper.label}</strong></div>
+          <div><span>Orientation</span><strong>{orientation === 'portrait' ? 'Portrait' : 'Landscape'}</strong></div>
         </div>
       </aside>
     </section>
