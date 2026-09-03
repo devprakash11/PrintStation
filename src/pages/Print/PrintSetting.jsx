@@ -13,7 +13,6 @@ import {
   ZoomOut,
   X,
 } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist';
 import '../../styles/multiFilePreview.css';
 
 const PAPER_SIZES = [
@@ -34,14 +33,18 @@ const PAPER_SIZES = [
 const getPdfPageCount = async (file) => {
   try {
     const buffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({
-      data: new Uint8Array(buffer),
-      disableWorker: true,
-    }).promise;
+    const text = new TextDecoder('latin1').decode(new Uint8Array(buffer));
 
-    const count = pdf.numPages;
-    await pdf.destroy();
-    return Math.max(1, count);
+    const countMatches = [...text.matchAll(/\/Count\s+(\d+)/g)]
+      .map((match) => Number(match[1]))
+      .filter((count) => Number.isInteger(count) && count > 0 && count <= 10000);
+
+    if (countMatches.length > 0) {
+      return Math.max(...countMatches);
+    }
+
+    const pageMatches = text.match(/\/Type\s*\/Page\b/g);
+    return Math.max(1, pageMatches?.length || 1);
   } catch (error) {
     console.error('Unable to determine PDF page count:', error);
     return 1;
