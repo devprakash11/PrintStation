@@ -47,9 +47,7 @@ export default function PrintUpload() {
 
   let printer = null;
   try {
-    printer = JSON.parse(
-      sessionStorage.getItem('printstation_printer') || 'null'
-    );
+    printer = JSON.parse(sessionStorage.getItem('printstation_printer') || 'null');
   } catch {
     printer = null;
   }
@@ -76,30 +74,17 @@ export default function PrintUpload() {
 
   const addFiles = (selectedFiles) => {
     const incomingFiles = Array.from(selectedFiles || []);
-
     if (!incomingFiles.length) return;
 
-    const invalidFiles = incomingFiles.filter(
-      (file) => !ACCEPTED_TYPES.includes(file.type)
-    );
+    const invalidFiles = incomingFiles.filter((file) => !ACCEPTED_TYPES.includes(file.type));
+    setError(invalidFiles.length ? 'Only PDF, JPG, and PNG files are supported.' : '');
 
-    if (invalidFiles.length) {
-      setError('Only PDF, JPG, and PNG files are supported.');
-    } else {
-      setError('');
-    }
-
-    const validFiles = incomingFiles.filter((file) =>
-      ACCEPTED_TYPES.includes(file.type)
-    );
-
+    const validFiles = incomingFiles.filter((file) => ACCEPTED_TYPES.includes(file.type));
     if (!validFiles.length) return;
 
     setFiles((currentFiles) => {
       const existingKeys = new Set(
-        currentFiles.map(
-          ({ file }) => `${file.name}-${file.size}-${file.lastModified}`
-        )
+        currentFiles.map(({ file }) => `${file.name}-${file.size}-${file.lastModified}`),
       );
 
       const newItems = validFiles
@@ -109,10 +94,7 @@ export default function PrintUpload() {
           existingKeys.add(key);
           return true;
         })
-        .map((file) => ({
-          file,
-          previewUrl: URL.createObjectURL(file),
-        }));
+        .map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
 
       if (!currentFiles.length && newItems.length) {
         setActiveFileIndex(0);
@@ -122,9 +104,7 @@ export default function PrintUpload() {
       return [...currentFiles, ...newItems];
     });
 
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   const handleDrop = (event) => {
@@ -138,9 +118,7 @@ export default function PrintUpload() {
       const item = currentFiles[indexToRemove];
       if (item) URL.revokeObjectURL(item.previewUrl);
 
-      const nextFiles = currentFiles.filter(
-        (_, index) => index !== indexToRemove
-      );
+      const nextFiles = currentFiles.filter((_, index) => index !== indexToRemove);
 
       if (!nextFiles.length) {
         setActiveFileIndex(0);
@@ -189,8 +167,7 @@ export default function PrintUpload() {
 
           <h1>Upload your documents</h1>
           <p>
-            Upload multiple PDF, JPG, or PNG files at once, then preview and
-            configure your print settings.
+            Upload multiple PDF, JPG, or PNG files at once, then preview and configure your print settings.
           </p>
         </div>
 
@@ -203,9 +180,7 @@ export default function PrintUpload() {
             }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={(event) => {
-              if (event.currentTarget === event.target) {
-                setIsDragging(false);
-              }
+              if (event.currentTarget === event.target) setIsDragging(false);
             }}
             onDrop={handleDrop}
           >
@@ -216,9 +191,7 @@ export default function PrintUpload() {
             <h2>Drag &amp; drop your documents</h2>
             <p>Select or drop multiple files to upload them together</p>
 
-            <div className="upload-divider">
-              <span>or</span>
-            </div>
+            <div className="upload-divider"><span>or</span></div>
 
             <input
               ref={inputRef}
@@ -281,9 +254,7 @@ export default function PrintUpload() {
                 {files.map(({ file }, index) => (
                   <div
                     key={`${file.name}-${file.size}-${file.lastModified}`}
-                    className={`uploaded-file-item ${
-                      index === activeFileIndex ? 'is-active' : ''
-                    }`}
+                    className={`uploaded-file-item ${index === activeFileIndex ? 'is-active' : ''}`}
                     role="button"
                     tabIndex={0}
                     onClick={() => setActiveFileIndex(index)}
@@ -323,6 +294,9 @@ export default function PrintUpload() {
             <PrintSetting
               file={activeFile}
               previewUrl={activePreviewUrl}
+              files={files}
+              activeFileIndex={activeFileIndex}
+              onSelectFile={setActiveFileIndex}
               pages={pages}
               setPages={setPages}
               customPages={customPages}
