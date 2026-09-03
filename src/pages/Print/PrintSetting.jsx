@@ -8,8 +8,10 @@ import {
   Copy,
   FileText,
   Files,
+  Loader2,
   Minus,
   Plus,
+  Printer,
   ZoomIn,
   ZoomOut,
   X,
@@ -49,6 +51,8 @@ const formatFileSize = (bytes) => {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 };
 
+const PROCESSING_DURATION = 2200;
+
 export default function PrintSetting({
   file,
   previewUrl,
@@ -75,7 +79,10 @@ export default function PrintSetting({
   const [pageCount, setPageCount] = useState(1);
   const [isPageCountLoading, setIsPageCountLoading] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printComplete, setPrintComplete] = useState(false);
   const paperSizeRef = useRef(null);
+  const printTimerRef = useRef(null);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -93,6 +100,8 @@ export default function PrintSetting({
     };
   }, []);
 
+  useEffect(() => () => clearTimeout(printTimerRef.current), []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -101,6 +110,7 @@ export default function PrintSetting({
 
       setZoom(1);
       setPreviewPage(1);
+      setPrintComplete(false);
 
       if (file.type !== 'application/pdf') {
         setPageCount(1);
@@ -148,6 +158,19 @@ export default function PrintSetting({
     setPreviewPage(1);
   };
 
+  const handlePrint = () => {
+    if (isPrinting || isPageCountLoading) return;
+
+    setIsPaperMenuOpen(false);
+    setPrintComplete(false);
+    setIsPrinting(true);
+
+    printTimerRef.current = setTimeout(() => {
+      setIsPrinting(false);
+      setPrintComplete(true);
+    }, PROCESSING_DURATION);
+  };
+
   const previousDisabled = !isPdf || isPageCountLoading || previewPage <= 1;
   const nextDisabled = !isPdf || isPageCountLoading || previewPage >= pageCount;
 
@@ -181,20 +204,11 @@ export default function PrintSetting({
         </div>
 
         <div className="document-preview-stage">
-          <button
-            type="button"
-            className="preview-arrow preview-arrow-left"
-            disabled={previousDisabled}
-            onClick={() => goToPage(previewPage - 1)}
-            aria-label="Previous page"
-          >
+          <button type="button" className="preview-arrow preview-arrow-left" disabled={previousDisabled} onClick={() => goToPage(previewPage - 1)} aria-label="Previous page">
             <ChevronLeft size={19} />
           </button>
 
-          <div
-            className={`document-preview-paper preview-${orientation}`}
-            style={{ '--paper-width': paperWidth, '--paper-height': paperHeight, '--preview-scale': zoom }}
-          >
+          <div className={`document-preview-paper preview-${orientation}`} style={{ '--paper-width': paperWidth, '--paper-height': paperHeight, '--preview-scale': zoom }}>
             {isPdf ? (
               <iframe
                 key={`${previewUrl}-page-${previewPage}`}
@@ -210,13 +224,7 @@ export default function PrintSetting({
             </span>
           </div>
 
-          <button
-            type="button"
-            className="preview-arrow preview-arrow-right"
-            disabled={nextDisabled}
-            onClick={() => goToPage(previewPage + 1)}
-            aria-label="Next page"
-          >
+          <button type="button" className="preview-arrow preview-arrow-right" disabled={nextDisabled} onClick={() => goToPage(previewPage + 1)} aria-label="Next page">
             <ChevronRight size={19} />
           </button>
         </div>
@@ -226,14 +234,7 @@ export default function PrintSetting({
             const isActive = index === activeFileIndex;
             const thumbnailIsPdf = thumbnailFile.type === 'application/pdf';
             return (
-              <button
-                key={`${thumbnailFile.name}-${thumbnailFile.size}-${thumbnailFile.lastModified}`}
-                type="button"
-                className={`preview-thumbnail preview-file-thumbnail ${isActive ? 'is-active' : ''}`}
-                onClick={() => selectFile(index)}
-                aria-label={`Open ${thumbnailFile.name}`}
-                aria-current={isActive ? 'true' : undefined}
-              >
+              <button key={`${thumbnailFile.name}-${thumbnailFile.size}-${thumbnailFile.lastModified}`} type="button" className={`preview-thumbnail preview-file-thumbnail ${isActive ? 'is-active' : ''}`} onClick={() => selectFile(index)} aria-label={`Open ${thumbnailFile.name}`} aria-current={isActive ? 'true' : undefined}>
                 <span className="preview-thumbnail-paper">
                   {thumbnailIsPdf ? (
                     <iframe title={`${thumbnailFile.name} thumbnail`} src={`${thumbnailUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`} tabIndex="-1" />
@@ -264,9 +265,7 @@ export default function PrintSetting({
           {pages === 'custom' && (
             <input className="custom-pages-input" value={customPages} onChange={(event) => setCustomPages(event.target.value.replace(/[^0-9,\- ]/g, ''))} placeholder="e.g. 1, 3-5, 8" aria-label="Custom pages" />
           )}
-          <small className="option-help">
-            {pages === 'all' ? `Print all ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.` : 'Enter page numbers or ranges separated by commas.'}
-          </small>
+          <small className="option-help">{pages === 'all' ? `Print all ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.` : 'Enter page numbers or ranges separated by commas.'}</small>
         </div>
 
         <div className="option-section">
@@ -331,7 +330,43 @@ export default function PrintSetting({
           <div><span>Paper</span><strong>{selectedPaper.label}</strong></div>
           <div><span>Orientation</span><strong>{orientation === 'portrait' ? 'Portrait' : 'Landscape'}</strong></div>
         </div>
+
+        <button
+          type="button"
+          className="continue-print-button"
+          onClick={handlePrint}
+          disabled={isPrinting || isPageCountLoading}
+          aria-busy={isPrinting}
+        >
+          {isPrinting ? <Loader2 size={18} className="print-processing-spinner" /> : <Printer size={18} />}
+          <span>{isPrinting ? 'Processing Print…' : printComplete ? 'Print Ready' : 'Print'}</span>
+        </button>
       </aside>
+
+      {isPrinting && (
+        <div className="print-processing-overlay" role="status" aria-live="polite">
+          <div className="print-processing-card">
+            <div className="print-processing-icon">
+              <Printer size={30} />
+              <span className="print-processing-ring" />
+            </div>
+            <strong>Processing your print</strong>
+            <p>Preparing {copies} {copies === 1 ? 'copy' : 'copies'} of your document…</p>
+            <div className="print-processing-progress" aria-hidden="true">
+              <span />
+            </div>
+            <small>Please wait while we send your document to the printer.</small>
+          </div>
+        </div>
+      )}
+
+      {printComplete && !isPrinting && (
+        <div className="print-complete-notice" role="status">
+          <Check size={17} />
+          <span>Print job processed successfully.</span>
+          <button type="button" onClick={() => setPrintComplete(false)} aria-label="Dismiss print status"><X size={15} /></button>
+        </div>
+      )}
     </section>
   );
 }
