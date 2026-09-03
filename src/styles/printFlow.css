@@ -56,7 +56,9 @@
 .printer-detected strong { display: block; font-size: 14px; }
 .printer-detected span { display: block; margin-top: 3px; color: var(--color-muted); font-size: 12px; }
 .flow-next-button { min-height: 46px; padding-inline: 25px; border: 0; color: #fff; }
-.upload-document-scanner-button { display: none; align-items: center; justify-content: center; gap: 8px; max-width: 1000px; margin: 14px auto 0; min-height: 48px; padding: 0 22px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 750; box-shadow: var(--shadow-soft); }
+
+/* Upload Document is intentionally visible at every viewport size. */
+.upload-document-scanner-button { display: flex !important; align-items: center; justify-content: center; gap: 8px; width: min(100%, 1000px); min-height: 48px; margin: 14px auto 0; padding: 0 22px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 750; box-shadow: var(--shadow-soft); box-sizing: border-box; text-decoration: none; }
 .upload-document-scanner-button:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .upload-step-main { max-width: 1000px; }
 .upload-placeholder-card { max-width: 680px; margin: 0 auto; padding: 70px 28px; text-align: center; }
@@ -72,12 +74,7 @@
   .flow-step { display: none; }
   .scanner-layout { grid-template-columns: 1fr; }
   .scanner-info { display: none; }
-  .upload-document-scanner-button { display: inline-flex; width: 100%; }
-}
-
-@media (min-width: 801px) {
-  .upload-document-scanner-button { display: inline-flex; }
-  .printer-detected + .upload-document-scanner-button { margin-top: 14px; }
+  .upload-document-scanner-button { width: 100%; }
 }
 
 @media (max-width: 639px) {
