@@ -8,27 +8,37 @@ import {
   FileText,
   Files,
   Minus,
-  Palette,
   Plus,
-  Ruler,
-  RotateCw,
+  ZoomIn,
+  ZoomOut,
   X,
 } from 'lucide-react';
 
 const PAPER_SIZES = [
-  { value: 'A4', label: 'A4', dimensions: '210 × 297 mm' },
-  { value: 'A3', label: 'A3', dimensions: '297 × 420 mm' },
-  { value: 'A5', label: 'A5', dimensions: '148 × 210 mm' },
-  { value: 'A6', label: 'A6', dimensions: '105 × 148 mm' },
-  { value: 'A2', label: 'A2', dimensions: '420 × 594 mm' },
-  { value: 'A1', label: 'A1', dimensions: '594 × 841 mm' },
-  { value: 'B4', label: 'B4', dimensions: '250 × 353 mm' },
-  { value: 'B5', label: 'B5', dimensions: '176 × 250 mm' },
-  { value: 'Letter', label: 'Letter', dimensions: '216 × 279 mm' },
-  { value: 'Legal', label: 'Legal', dimensions: '216 × 356 mm' },
-  { value: 'Executive', label: 'Executive', dimensions: '184 × 267 mm' },
-  { value: 'Tabloid', label: 'Tabloid', dimensions: '279 × 432 mm' },
+  { value: 'A4', label: 'A4', dimensions: '210 × 297 mm', width: 210, height: 297 },
+  { value: 'A3', label: 'A3', dimensions: '297 × 420 mm', width: 297, height: 420 },
+  { value: 'A5', label: 'A5', dimensions: '148 × 210 mm', width: 148, height: 210 },
+  { value: 'A6', label: 'A6', dimensions: '105 × 148 mm', width: 105, height: 148 },
+  { value: 'A2', label: 'A2', dimensions: '420 × 594 mm', width: 420, height: 594 },
+  { value: 'A1', label: 'A1', dimensions: '594 × 841 mm', width: 594, height: 841 },
+  { value: 'B4', label: 'B4', dimensions: '250 × 353 mm', width: 250, height: 353 },
+  { value: 'B5', label: 'B5', dimensions: '176 × 250 mm', width: 176, height: 250 },
+  { value: 'Letter', label: 'Letter', dimensions: '216 × 279 mm', width: 216, height: 279 },
+  { value: 'Legal', label: 'Legal', dimensions: '216 × 356 mm', width: 216, height: 356 },
+  { value: 'Executive', label: 'Executive', dimensions: '184 × 267 mm', width: 184, height: 267 },
+  { value: 'Tabloid', label: 'Tabloid', dimensions: '279 × 432 mm', width: 279, height: 432 },
 ];
+
+const getPdfPageCount = async (file) => {
+  try {
+    const buffer = await file.arrayBuffer();
+    const text = new TextDecoder('latin1').decode(buffer);
+    const pageMatches = text.match(/\/Type\s*\/Page(?:[\s/<>]|$)/g);
+    return Math.max(1, pageMatches?.length || 1);
+  } catch {
+    return 1;
+  }
+};
 
 export default function PrintSetting({
   file,
@@ -50,6 +60,8 @@ export default function PrintSetting({
   onRemove,
 }) {
   const [isPaperMenuOpen, setIsPaperMenuOpen] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
+  const [zoom, setZoom] = useState(1);
   const paperSizeRef = useRef(null);
 
   useEffect(() => {
@@ -74,74 +86,172 @@ export default function PrintSetting({
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPageCount = async () => {
+      if (!file) return;
+
+      if (file.type !== 'application/pdf') {
+        setPageCount(1);
+        setPreviewPage(1);
+        return;
+      }
+
+      const count = await getPdfPageCount(file);
+      if (!cancelled) {
+        setPageCount(count);
+        setPreviewPage((page) => Math.min(Math.max(1, page), count));
+      }
+    };
+
+    loadPageCount();
+    setZoom(1);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [file, setPreviewPage]);
+
   if (!file || !previewUrl) return null;
 
   const isPdf = file.type === 'application/pdf';
   const selectedPaper =
     PAPER_SIZES.find((paper) => paper.value === paperSize) || PAPER_SIZES[0];
 
+  const paperWidth = orientation === 'portrait' ? selectedPaper.width : selectedPaper.height;
+  const paperHeight = orientation === 'portrait' ? selectedPaper.height : selectedPaper.width;
+
   const handlePaperSizeChange = (value) => {
     setPaperSize(value);
     setIsPaperMenuOpen(false);
+  };
+
+  const goToPage = (page) => {
+    setPreviewPage(Math.min(pageCount, Math.max(1, page)));
   };
 
   return (
     <section className="document-workspace">
       <div className="document-preview-panel">
         <div className="workspace-header">
-          <div>
-            <FileText size={19} />
-            <strong>Document Preview</strong>
+          <div className="workspace-file-meta">
+            <span className="workspace-file-icon" aria-hidden="true">
+              <FileText size={17} />
+            </span>
+            <div>
+              <strong title={file.name}>{file.name}</strong>
+              <small>
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+                <span aria-hidden="true">•</span>
+                {pageCount} {pageCount === 1 ? 'Page' : 'Pages'}
+              </small>
+            </div>
+          </div>
+
+          <div className="preview-toolbar">
+            <button
+              type="button"
+              onClick={() => setZoom((value) => Math.max(0.8, Number((value - 0.1).toFixed(1))))}
+              disabled={zoom <= 0.8}
+              aria-label="Zoom out"
+            >
+              <ZoomOut size={17} />
+            </button>
+            <span>{Math.round(zoom * 100)}%</span>
+            <button
+              type="button"
+              onClick={() => setZoom((value) => Math.min(1.4, Number((value + 0.1).toFixed(1))))}
+              disabled={zoom >= 1.4}
+              aria-label="Zoom in"
+            >
+              <ZoomIn size={17} />
+            </button>
+            <button
+              type="button"
+              className="preview-remove-button"
+              onClick={onRemove}
+              aria-label="Remove document"
+            >
+              <X size={17} />
+            </button>
+          </div>
+        </div>
+
+        <div className="document-preview-stage">
+          <button
+            type="button"
+            className="preview-arrow preview-arrow-left"
+            disabled={!isPdf || previewPage <= 1}
+            onClick={() => goToPage(previewPage - 1)}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={19} />
+          </button>
+
+          <div
+            className={`document-preview-paper preview-${orientation}`}
+            style={{
+              '--paper-width': paperWidth,
+              '--paper-height': paperHeight,
+              '--preview-scale': zoom,
+            }}
+          >
+            {isPdf ? (
+              <iframe
+                title="PDF document preview"
+                src={`${previewUrl}#page=${previewPage}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                className="pdf-preview"
+              />
+            ) : (
+              <img
+                src={previewUrl}
+                alt="Uploaded document preview"
+                className="image-preview"
+              />
+            )}
+
+            <span className="preview-page-badge">
+              Page {previewPage} of {pageCount}
+            </span>
           </div>
 
           <button
             type="button"
-            className="remove-file-btn"
-            onClick={onRemove}
-            aria-label="Remove document"
+            className="preview-arrow preview-arrow-right"
+            disabled={!isPdf || previewPage >= pageCount}
+            onClick={() => goToPage(previewPage + 1)}
+            aria-label="Next page"
           >
-            <X size={17} />
+            <ChevronRight size={19} />
           </button>
         </div>
 
-        <div className={`document-preview-stage preview-${orientation}`}>
-          {isPdf ? (
-            <iframe
-              title="PDF document preview"
-              src={`${previewUrl}#page=${previewPage}&view=FitH`}
-              className="pdf-preview"
-            />
-          ) : (
-            <img
-              src={previewUrl}
-              alt="Uploaded document preview"
-              className="image-preview"
-            />
-          )}
+        <div className="preview-thumbnails" aria-label="Document pages">
+          {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+            <button
+              key={page}
+              type="button"
+              className={`preview-thumbnail ${page === previewPage ? 'is-active' : ''}`}
+              onClick={() => goToPage(page)}
+              aria-label={`Preview page ${page}`}
+              aria-current={page === previewPage ? 'page' : undefined}
+            >
+              <span className="preview-thumbnail-paper">
+                {isPdf ? (
+                  <iframe
+                    title={`Page ${page} thumbnail`}
+                    src={`${previewUrl}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                    tabIndex="-1"
+                  />
+                ) : (
+                  <img src={previewUrl} alt="" />
+                )}
+              </span>
+              <span className="preview-thumbnail-number">{page}</span>
+            </button>
+          ))}
         </div>
-
-        {isPdf && (
-          <div className="preview-navigation">
-            <button
-              type="button"
-              disabled={previewPage <= 1}
-              onClick={() => setPreviewPage((page) => Math.max(1, page - 1))}
-              aria-label="Previous preview page"
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            <span>Preview page {previewPage}</span>
-
-            <button
-              type="button"
-              onClick={() => setPreviewPage((page) => page + 1)}
-              aria-label="Next preview page"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        )}
 
         <div className="selected-file">
           <FileText size={17} />
@@ -151,7 +261,6 @@ export default function PrintSetting({
       </div>
 
       <aside className="print-options-panel">
-        {/* Pages */}
         <div className="option-section">
           <span className="option-label">
             <Files size={16} />
@@ -189,12 +298,11 @@ export default function PrintSetting({
 
           <small className="option-help">
             {pages === 'all'
-              ? 'Print every page in the document.'
+              ? `Print all ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.`
               : 'Enter page numbers or ranges separated by commas.'}
           </small>
         </div>
 
-        {/* Copies */}
         <div className="option-section">
           <span className="option-label">
             <Copy size={16} />
@@ -210,9 +318,7 @@ export default function PrintSetting({
             >
               <Minus size={17} />
             </button>
-
             <strong>{copies}</strong>
-
             <button
               type="button"
               disabled={copies >= 99}
@@ -226,13 +332,8 @@ export default function PrintSetting({
           <small className="option-help">Choose from 1 to 99 copies.</small>
         </div>
 
-        {/* Print Color */}
         <div className="option-section">
-          <span className="option-label">
-            <Palette size={16} />
-            Print Color
-          </span>
-
+          <span className="option-label">Print Color</span>
           <div className="option-segmented color-mode-control">
             <button
               type="button"
@@ -249,7 +350,6 @@ export default function PrintSetting({
               B&amp;W
             </button>
           </div>
-
           <small className="option-help">
             {colorMode === 'color'
               ? 'Print the document in full color.'
@@ -257,12 +357,8 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Paper Size */}
         <div className="option-section paper-size-section">
-          <span className="option-label">
-            <Ruler size={16} />
-            Paper Size
-          </span>
+          <span className="option-label">Paper Size</span>
 
           <div className="paper-size-field" ref={paperSizeRef}>
             <button
@@ -297,15 +393,13 @@ export default function PrintSetting({
                       onClick={() => handlePaperSizeChange(paper.value)}
                     >
                       <span className="paper-size-option-icon" aria-hidden="true">
-                        <FileText size={25} strokeWidth={1.7} />
+                        <FileText size={23} strokeWidth={1.7} />
                       </span>
-
                       <span className="paper-size-option-name">{paper.label}</span>
                       <span className="paper-size-option-dimensions">{paper.dimensions}</span>
-
                       {isSelected && (
                         <span className="paper-size-option-check" aria-hidden="true">
-                          <Check size={20} strokeWidth={2.5} />
+                          <Check size={19} strokeWidth={2.5} />
                         </span>
                       )}
                     </button>
@@ -320,13 +414,8 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Orientation */}
         <div className="option-section">
-          <span className="option-label">
-            <RotateCw size={16} />
-            Orientation
-          </span>
-
+          <span className="option-label">Orientation</span>
           <div className="option-segmented orientation-control">
             <button
               type="button"
@@ -345,7 +434,6 @@ export default function PrintSetting({
               Landscape
             </button>
           </div>
-
           <small className="option-help">
             {orientation === 'portrait'
               ? 'Print vertically on the page.'
@@ -353,7 +441,6 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Summary */}
         <div className="print-summary">
           <div>
             <span>Document</span>
@@ -361,7 +448,7 @@ export default function PrintSetting({
           </div>
           <div>
             <span>Pages</span>
-            <strong>{pages === 'all' ? 'All' : customPages || 'Custom'}</strong>
+            <strong>{pages === 'all' ? `All (${pageCount})` : customPages || 'Custom'}</strong>
           </div>
           <div>
             <span>Copies</span>
@@ -373,15 +460,11 @@ export default function PrintSetting({
           </div>
           <div>
             <span>Paper</span>
-            <strong>
-              {selectedPaper.label} ({selectedPaper.dimensions})
-            </strong>
+            <strong>{selectedPaper.label}</strong>
           </div>
           <div>
             <span>Orientation</span>
-            <strong>
-              {orientation === 'portrait' ? 'Portrait' : 'Landscape'}
-            </strong>
+            <strong>{orientation === 'portrait' ? 'Portrait' : 'Landscape'}</strong>
           </div>
         </div>
 
