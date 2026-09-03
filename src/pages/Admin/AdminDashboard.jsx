@@ -28,7 +28,7 @@ const SESSION_KEY = 'printstation_admin_session';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
-  { label: 'Printers', icon: Printer },
+  { label: 'Printers', icon: Printer, path: '/admin/printers' },
   { label: 'QR Codes', icon: QrCode },
   { label: 'Print Jobs', icon: FileText },
   { label: 'Users', icon: Users },
@@ -93,21 +93,12 @@ export default function AdminDashboard() {
             <strong>Admin Panel</strong>
             <span>Management Console</span>
           </div>
-          <button
-            className="admin-sidebar-close"
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation"
-          >
+          <button className="admin-sidebar-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
             <X size={20} />
           </button>
         </div>
 
-        <button
-          className="admin-new-job"
-          type="button"
-          onClick={() => (window.location.href = '/print/upload')}
-        >
+        <button className="admin-new-job" type="button" onClick={() => (window.location.href = '/print/upload')}>
           <Plus size={19} />
           New Print Job
         </button>
@@ -118,12 +109,7 @@ export default function AdminDashboard() {
             const isActive = activeItem === item.label;
 
             return (
-              <button
-                key={item.label}
-                type="button"
-                className={`admin-nav-item ${isActive ? 'is-active' : ''}`}
-                onClick={() => handleNavigation(item)}
-              >
+              <button key={item.label} type="button" className={`admin-nav-item ${isActive ? 'is-active' : ''}`} onClick={() => handleNavigation(item)}>
                 <Icon size={20} strokeWidth={1.9} />
                 <span>{item.label}</span>
               </button>
@@ -136,7 +122,6 @@ export default function AdminDashboard() {
             <CircleHelp size={20} strokeWidth={1.9} />
             <span>Help Center</span>
           </button>
-
           <button className="admin-nav-item" type="button" onClick={handleLogout}>
             <LogOut size={20} strokeWidth={1.9} />
             <span>Logout</span>
@@ -145,22 +130,12 @@ export default function AdminDashboard() {
       </aside>
 
       {mobileOpen && (
-        <button
-          className="admin-sidebar-overlay"
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          aria-label="Close navigation overlay"
-        />
+        <button className="admin-sidebar-overlay" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation overlay" />
       )}
 
       <main className="admin-main">
         <header className="admin-topbar">
-          <button
-            className="admin-menu-toggle"
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation"
-          >
+          <button className="admin-menu-toggle" type="button" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
             <Menu size={22} />
           </button>
 
@@ -232,7 +207,7 @@ export default function AdminDashboard() {
                 <h2>Recent Activity</h2>
                 <span>Latest printer and print-job activity</span>
               </div>
-              <button type="button" onClick={() => setActiveItem('Print Jobs')}>
+              <button type="button" onClick={() => handleNavigation({ label: 'Print Jobs' })}>
                 View All <ChevronRight size={17} />
               </button>
             </div>
@@ -251,20 +226,11 @@ export default function AdminDashboard() {
                 <tbody>
                   {ACTIVITIES.map((activity) => (
                     <tr key={`${activity.printer}-${activity.document}`}>
-                      <td>
-                        <span className={`admin-status is-${activity.type}`}>
-                          <i />
-                          {activity.status}
-                        </span>
-                      </td>
+                      <td><span className={`admin-status is-${activity.type}`}><i />{activity.status}</span></td>
                       <td>{activity.printer}</td>
                       <td className="admin-document-name">{activity.document}</td>
                       <td>{activity.time}</td>
-                      <td>
-                        <button className="admin-row-action" type="button" aria-label={`Open ${activity.document}`}>
-                          <ChevronRight size={17} />
-                        </button>
-                      </td>
+                      <td><button className="admin-row-action" type="button" aria-label={`Open ${activity.document}`}><ChevronRight size={17} /></button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -275,10 +241,7 @@ export default function AdminDashboard() {
               {ACTIVITIES.map((activity) => (
                 <article key={`${activity.printer}-mobile-${activity.document}`}>
                   <div>
-                    <span className={`admin-status is-${activity.type}`}>
-                      <i />
-                      {activity.status}
-                    </span>
+                    <span className={`admin-status is-${activity.type}`}><i />{activity.status}</span>
                     <strong>{activity.document}</strong>
                     <span>{activity.printer} · {activity.time}</span>
                   </div>
