@@ -4,6 +4,9 @@ import {
   FileText,
   Minus,
   Plus,
+  Palette,
+  Ruler,
+  RotateCw,
   X,
 } from 'lucide-react';
 
@@ -113,10 +116,8 @@ export default function PrintSetting({
       </div>
 
       <aside className="print-options-panel">
-        {/* Pages */}
         <div className="option-section">
           <span className="option-label">Pages</span>
-
           <div className="option-segmented">
             <button
               type="button"
@@ -125,7 +126,6 @@ export default function PrintSetting({
             >
               All
             </button>
-
             <button
               type="button"
               className={pages === 'custom' ? 'active' : ''}
@@ -134,7 +134,6 @@ export default function PrintSetting({
               Custom
             </button>
           </div>
-
           {pages === 'custom' && (
             <input
               className="custom-pages-input"
@@ -146,7 +145,6 @@ export default function PrintSetting({
               aria-label="Custom pages"
             />
           )}
-
           <small className="option-help">
             {pages === 'all'
               ? 'Print every page in the document.'
@@ -154,10 +152,8 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Copies */}
         <div className="option-section">
           <span className="option-label">Copies</span>
-
           <div className="copies-control">
             <button
               type="button"
@@ -167,9 +163,7 @@ export default function PrintSetting({
             >
               <Minus size={17} />
             </button>
-
             <strong>{copies}</strong>
-
             <button
               type="button"
               disabled={copies >= 99}
@@ -179,34 +173,30 @@ export default function PrintSetting({
               <Plus size={17} />
             </button>
           </div>
-
           <small className="option-help">Choose from 1 to 99 copies.</small>
         </div>
 
-        {/* Print Color */}
         <div className="option-section">
-          <span className="option-label">Print Color</span>
-
+          <span className="option-label">
+            <Palette size={16} />
+            Print Color
+          </span>
           <div className="option-segmented color-mode-control">
             <button
               type="button"
               className={colorMode === 'color' ? 'active' : ''}
               onClick={() => setColorMode('color')}
             >
-              <span className="color-preview color-preview-full" aria-hidden="true" />
               Color
             </button>
-
             <button
               type="button"
               className={colorMode === 'bw' ? 'active' : ''}
               onClick={() => setColorMode('bw')}
             >
-              <span className="color-preview color-preview-bw" aria-hidden="true" />
               B&amp;W
             </button>
           </div>
-
           <small className="option-help">
             {colorMode === 'color'
               ? 'Print the document in full color.'
@@ -214,33 +204,33 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Paper Size */}
         <div className="option-section">
-          <span className="option-label">Paper Size</span>
-
-          <div className="select-control">
-            <select
-              value={paperSize}
-              onChange={(event) => setPaperSize(event.target.value)}
-              aria-label="Paper size"
-            >
-              {PAPER_SIZES.map((paper) => (
-                <option key={paper.value} value={paper.value}>
-                  {paper.label} — {paper.dimensions}
-                </option>
-              ))}
-            </select>
-          </div>
-
+          <span className="option-label">
+            <Ruler size={16} />
+            Paper Size
+          </span>
+          <select
+            className="paper-size-select"
+            value={paperSize}
+            onChange={(event) => setPaperSize(event.target.value)}
+            aria-label="Paper size"
+          >
+            {PAPER_SIZES.map((paper) => (
+              <option key={paper.value} value={paper.value}>
+                {paper.label} — {paper.dimensions}
+              </option>
+            ))}
+          </select>
           <small className="option-help">
             {selectedPaper.label}: {selectedPaper.dimensions}
           </small>
         </div>
 
-        {/* Orientation */}
         <div className="option-section">
-          <span className="option-label">Orientation</span>
-
+          <span className="option-label">
+            <RotateCw size={16} />
+            Orientation
+          </span>
           <div className="option-segmented orientation-control">
             <button
               type="button"
@@ -250,7 +240,6 @@ export default function PrintSetting({
             >
               Portrait
             </button>
-
             <button
               type="button"
               className={orientation === 'landscape' ? 'active' : ''}
@@ -260,7 +249,6 @@ export default function PrintSetting({
               Landscape
             </button>
           </div>
-
           <small className="option-help">
             {orientation === 'portrait'
               ? 'Print vertically on the page.'
@@ -268,35 +256,29 @@ export default function PrintSetting({
           </small>
         </div>
 
-        {/* Print Summary */}
         <div className="print-summary">
           <div>
             <span>Document</span>
             <strong>{file.name}</strong>
           </div>
-
           <div>
             <span>Pages</span>
             <strong>{pages === 'all' ? 'All' : customPages || 'Custom'}</strong>
           </div>
-
           <div>
             <span>Copies</span>
             <strong>{copies}</strong>
           </div>
-
           <div>
             <span>Color</span>
             <strong>{colorMode === 'color' ? 'Color' : 'B&W'}</strong>
           </div>
-
           <div>
             <span>Paper</span>
             <strong>
               {selectedPaper.label} ({selectedPaper.dimensions})
             </strong>
           </div>
-
           <div>
             <span>Orientation</span>
             <strong>
