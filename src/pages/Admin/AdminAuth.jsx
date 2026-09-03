@@ -6,7 +6,7 @@ import '../../styles/adminAuth.css';
 
 const STORAGE_KEY = 'printstation_admin_accounts';
 const SESSION_KEY = 'printstation_admin_session';
-const AUTH_SUCCESS_REDIRECT = '/print/upload';
+const AUTH_SUCCESS_REDIRECT = '/admin/dashboard';
 
 function getAccounts() {
   try {
@@ -30,7 +30,7 @@ function saveSession(account) {
   );
 }
 
-function redirectToPrintUpload() {
+function redirectToAdminDashboard() {
   window.location.href = AUTH_SUCCESS_REDIRECT;
 }
 
@@ -99,10 +99,10 @@ export default function AdminAuth() {
       saveSession(account);
       setMessage({
         type: 'success',
-        text: 'Account created successfully. Opening the upload workspace...',
+        text: 'Account created successfully. Opening the admin dashboard...',
       });
 
-      setTimeout(redirectToPrintUpload, 500);
+      setTimeout(redirectToAdminDashboard, 500);
       return;
     }
 
@@ -121,10 +121,10 @@ export default function AdminAuth() {
     saveSession(account);
     setMessage({
       type: 'success',
-      text: 'Login successful. Opening the upload workspace...',
+      text: 'Login successful. Opening the admin dashboard...',
     });
 
-    setTimeout(redirectToPrintUpload, 500);
+    setTimeout(redirectToAdminDashboard, 500);
   };
 
   return (
