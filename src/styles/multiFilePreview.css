@@ -132,7 +132,41 @@
 }
 
 /* =========================================================
-   06. RESPONSIVE — TABLET
+   06. PRINT SUMMARY — OVERFLOW PROTECTION
+   ========================================================= */
+
+.print-summary {
+  min-width: 0;
+}
+
+.print-summary > div {
+  display: grid;
+  grid-template-columns: minmax(72px, 90px) minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+.print-summary > div > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-summary > div > strong {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   07. RESPONSIVE — TABLET
    ========================================================= */
 
 @media (max-width: 800px) {
@@ -146,10 +180,14 @@
     height: 68px;
     flex-basis: 68px;
   }
+
+  .print-summary > div {
+    grid-template-columns: minmax(72px, 86px) minmax(0, 1fr);
+  }
 }
 
 /* =========================================================
-   07. RESPONSIVE — MOBILE
+   08. RESPONSIVE — MOBILE
    ========================================================= */
 
 @media (max-width: 639px) {
@@ -174,10 +212,15 @@
     border-radius: 6px;
     font-size: 9px;
   }
+
+  .print-summary > div {
+    grid-template-columns: minmax(68px, 80px) minmax(0, 1fr);
+    gap: 10px;
+  }
 }
 
 /* =========================================================
-   08. RESPONSIVE — VERY SMALL DEVICES
+   09. RESPONSIVE — VERY SMALL DEVICES
    ========================================================= */
 
 @media (max-width: 380px) {
@@ -189,5 +232,9 @@
     width: 56px;
     height: 56px;
     flex-basis: 56px;
+  }
+
+  .print-summary > div {
+    grid-template-columns: minmax(64px, 76px) minmax(0, 1fr);
   }
 }
