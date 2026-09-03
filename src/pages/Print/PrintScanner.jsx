@@ -17,7 +17,7 @@ function parsePrinterQr(value) {
       };
     }
   } catch {
-    // Continue with the supported plain-text format.
+    // Continue with plain-text printer QR data.
   }
 
   if (raw.toLowerCase().startsWith('printstation:')) {
@@ -35,20 +35,15 @@ function parsePrinterQr(value) {
 function loadQrScannerLibrary() {
   if (window.Html5Qrcode) return Promise.resolve(window.Html5Qrcode);
 
-  const existing = document.querySelector(`script[src="${QR_SCANNER_URL}"]`);
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener('load', () => resolve(window.Html5Qrcode), { once: true });
-      existing.addEventListener('error', () => reject(new Error('QR library failed to load')), { once: true });
-    });
-  }
-
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = QR_SCANNER_URL;
     script.async = true;
-    script.onload = () => window.Html5Qrcode ? resolve(window.Html5Qrcode) : reject(new Error('QR library loaded without Html5Qrcode'));
-    script.onerror = () => reject(new Error('QR library failed to load'));
+    script.onload = () => {
+      if (window.Html5Qrcode) resolve(window.Html5Qrcode);
+      else reject(new Error('QR scanner library loaded without Html5Qrcode'));
+    };
+    script.onerror = () => reject(new Error('QR scanner library failed to load'));
     document.head.appendChild(script);
   });
 }
@@ -68,15 +63,13 @@ export default function PrintScanner() {
         const Html5Qrcode = await loadQrScannerLibrary();
         if (cancelled) return;
 
-        scanner = new Html5Qrcode('printstation-qr-reader', {
-          verbose: false,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-        });
+        // Do not reference Html5QrcodeSupportedFormats here. Older builds of
+        // html5-qrcode may not expose that global and would stop the camera.
+        scanner = new Html5Qrcode('printstation-qr-reader', { verbose: false });
         scannerRef.current = scanner;
 
-        // Use the environment-facing camera directly. This avoids relying on
-        // camera labels, which are often empty until permission is granted.
         setStatus('scanning');
+
         await scanner.start(
           { facingMode: 'environment' },
           {
@@ -90,34 +83,37 @@ export default function PrintScanner() {
           },
           async (decodedText) => {
             if (cancelled || printer) return;
+
             const detected = parsePrinterQr(decodedText);
             if (!detected) return;
 
             setPrinter(detected);
             setStatus('connected');
+
             try {
               await scanner.stop();
             } catch {
-              // Scanner may already have stopped.
+              // Scanner may already be stopped.
             }
           },
           () => {
-            // QR not found in the current frame; keep scanning.
+            // QR code was not found in this frame. Continue scanning.
           },
         );
       } catch (scanError) {
         if (cancelled) return;
+
         setStatus('error');
         const message = String(scanError?.message || '').toLowerCase();
 
         if (scanError?.name === 'NotAllowedError' || scanError?.name === 'PermissionDeniedError' || message.includes('permission')) {
           setError('Camera permission was denied. Allow camera access for PrintStation and tap Try again.');
-        } else if (scanError?.name === 'NotFoundError' || message.includes('camera') && message.includes('not found')) {
+        } else if (scanError?.name === 'NotFoundError' || (message.includes('camera') && message.includes('not found'))) {
           setError('No camera was found on this device.');
-        } else if (message.includes('failed to load') || message.includes('library')) {
-          setError('The QR scanner library could not load. Check your internet connection and try again.');
+        } else if (message.includes('library') || message.includes('failed to load')) {
+          setError('The QR scanner could not load. Check your internet connection and try again.');
         } else {
-          setError('Unable to start the camera. Make sure this page is using HTTPS or localhost and camera access is allowed.');
+          setError('Unable to start the camera. Use HTTPS or localhost and allow camera access.');
         }
       }
     }
