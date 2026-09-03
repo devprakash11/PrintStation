@@ -155,7 +155,7 @@ export default function PrintUpload() {
           <span>PrintStation</span>
         </div>
 
-        <div className="flow-step">Step 2 of 4</div>
+        <div className="flow-step">Step 2 of 2</div>
       </header>
 
       <main className="upload-step-main container">

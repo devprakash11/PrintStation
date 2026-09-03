@@ -98,7 +98,7 @@ export default function PrintScanner() {
       <header className="print-flow-header">
         <a href="/" className="flow-back-link"><ArrowLeft size={18} /> Back</a>
         <div className="flow-brand"><QrCode size={24} /><span>PrintStation</span></div>
-        <div className="flow-step">Step 1 of 4</div>
+        <div className="flow-step">Step 1 of 2</div>
       </header>
 
       <main className="scanner-main container">
