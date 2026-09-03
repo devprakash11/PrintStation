@@ -1,10 +1,12 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Copy,
   FileText,
+  Files,
   Minus,
-  Plus,
   Palette,
+  Plus,
   Ruler,
   RotateCw,
   X,
@@ -47,8 +49,7 @@ export default function PrintSetting({
   if (!file || !previewUrl) return null;
 
   const isPdf = file.type === 'application/pdf';
-  const selectedPaper =
-    PAPER_SIZES.find((paper) => paper.value === paperSize) || PAPER_SIZES[0];
+  const selectedPaper = PAPER_SIZES.find((paper) => paper.value === paperSize) || PAPER_SIZES[0];
 
   return (
     <section className="document-workspace">
@@ -58,13 +59,7 @@ export default function PrintSetting({
             <FileText size={19} />
             <strong>Document Preview</strong>
           </div>
-
-          <button
-            type="button"
-            className="remove-file-btn"
-            onClick={onRemove}
-            aria-label="Remove document"
-          >
+          <button type="button" className="remove-file-btn" onClick={onRemove} aria-label="Remove document">
             <X size={17} />
           </button>
         </div>
@@ -77,11 +72,7 @@ export default function PrintSetting({
               className="pdf-preview"
             />
           ) : (
-            <img
-              src={previewUrl}
-              alt="Uploaded document preview"
-              className="image-preview"
-            />
+            <img src={previewUrl} alt="Uploaded document preview" className="image-preview" />
           )}
         </div>
 
@@ -95,9 +86,7 @@ export default function PrintSetting({
             >
               <ChevronLeft size={18} />
             </button>
-
             <span>Preview page {previewPage}</span>
-
             <button
               type="button"
               onClick={() => setPreviewPage((page) => page + 1)}
@@ -116,21 +105,17 @@ export default function PrintSetting({
       </div>
 
       <aside className="print-options-panel">
+        {/* Pages */}
         <div className="option-section">
-          <span className="option-label">Pages</span>
+          <span className="option-label">
+            <Files size={16} />
+            Pages
+          </span>
           <div className="option-segmented">
-            <button
-              type="button"
-              className={pages === 'all' ? 'active' : ''}
-              onClick={() => setPages('all')}
-            >
+            <button type="button" className={pages === 'all' ? 'active' : ''} onClick={() => setPages('all')}>
               All
             </button>
-            <button
-              type="button"
-              className={pages === 'custom' ? 'active' : ''}
-              onClick={() => setPages('custom')}
-            >
+            <button type="button" className={pages === 'custom' ? 'active' : ''} onClick={() => setPages('custom')}>
               Custom
             </button>
           </div>
@@ -138,22 +123,22 @@ export default function PrintSetting({
             <input
               className="custom-pages-input"
               value={customPages}
-              onChange={(event) =>
-                setCustomPages(event.target.value.replace(/[^0-9,\- ]/g, ''))
-              }
+              onChange={(event) => setCustomPages(event.target.value.replace(/[^0-9,\- ]/g, ''))}
               placeholder="e.g. 1, 3-5, 8"
               aria-label="Custom pages"
             />
           )}
           <small className="option-help">
-            {pages === 'all'
-              ? 'Print every page in the document.'
-              : 'Enter page numbers or ranges separated by commas.'}
+            {pages === 'all' ? 'Print every page in the document.' : 'Enter page numbers or ranges separated by commas.'}
           </small>
         </div>
 
+        {/* Copies */}
         <div className="option-section">
-          <span className="option-label">Copies</span>
+          <span className="option-label">
+            <Copy size={16} />
+            Copies
+          </span>
           <div className="copies-control">
             <button
               type="button"
@@ -176,120 +161,69 @@ export default function PrintSetting({
           <small className="option-help">Choose from 1 to 99 copies.</small>
         </div>
 
+        {/* Print Color */}
         <div className="option-section">
-          <span className="option-label">
-            <Palette size={16} />
-            Print Color
-          </span>
+          <span className="option-label"><Palette size={16} />Print Color</span>
           <div className="option-segmented color-mode-control">
-            <button
-              type="button"
-              className={colorMode === 'color' ? 'active' : ''}
-              onClick={() => setColorMode('color')}
-            >
+            <button type="button" className={colorMode === 'color' ? 'active' : ''} onClick={() => setColorMode('color')}>
               Color
             </button>
-            <button
-              type="button"
-              className={colorMode === 'bw' ? 'active' : ''}
-              onClick={() => setColorMode('bw')}
-            >
+            <button type="button" className={colorMode === 'bw' ? 'active' : ''} onClick={() => setColorMode('bw')}>
               B&amp;W
             </button>
           </div>
           <small className="option-help">
-            {colorMode === 'color'
-              ? 'Print the document in full color.'
-              : 'Print the document in black and white.'}
+            {colorMode === 'color' ? 'Print the document in full color.' : 'Print the document in black and white.'}
           </small>
         </div>
 
+        {/* Paper Size */}
         <div className="option-section">
-          <span className="option-label">
-            <Ruler size={16} />
-            Paper Size
-          </span>
-          <select
-            className="paper-size-select"
-            value={paperSize}
-            onChange={(event) => setPaperSize(event.target.value)}
-            aria-label="Paper size"
-          >
-            {PAPER_SIZES.map((paper) => (
-              <option key={paper.value} value={paper.value}>
-                {paper.label} — {paper.dimensions}
-              </option>
-            ))}
-          </select>
-          <small className="option-help">
-            {selectedPaper.label}: {selectedPaper.dimensions}
-          </small>
-        </div>
-
-        <div className="option-section">
-          <span className="option-label">
-            <RotateCw size={16} />
-            Orientation
-          </span>
-          <div className="option-segmented orientation-control">
-            <button
-              type="button"
-              className={orientation === 'portrait' ? 'active' : ''}
-              onClick={() => setOrientation('portrait')}
-              aria-pressed={orientation === 'portrait'}
+          <span className="option-label"><Ruler size={16} />Paper Size</span>
+          <div className="paper-size-field">
+            <select
+              className="paper-size-select"
+              value={paperSize}
+              onChange={(event) => setPaperSize(event.target.value)}
+              aria-label="Paper size"
             >
+              {PAPER_SIZES.map((paper) => (
+                <option key={paper.value} value={paper.value}>
+                  {paper.label} — {paper.dimensions}
+                </option>
+              ))}
+            </select>
+          </div>
+          <small className="option-help">{selectedPaper.label}: {selectedPaper.dimensions}</small>
+        </div>
+
+        {/* Orientation */}
+        <div className="option-section">
+          <span className="option-label"><RotateCw size={16} />Orientation</span>
+          <div className="option-segmented orientation-control">
+            <button type="button" className={orientation === 'portrait' ? 'active' : ''} onClick={() => setOrientation('portrait')} aria-pressed={orientation === 'portrait'}>
               Portrait
             </button>
-            <button
-              type="button"
-              className={orientation === 'landscape' ? 'active' : ''}
-              onClick={() => setOrientation('landscape')}
-              aria-pressed={orientation === 'landscape'}
-            >
+            <button type="button" className={orientation === 'landscape' ? 'active' : ''} onClick={() => setOrientation('landscape')} aria-pressed={orientation === 'landscape'}>
               Landscape
             </button>
           </div>
           <small className="option-help">
-            {orientation === 'portrait'
-              ? 'Print vertically on the page.'
-              : 'Print horizontally on the page.'}
+            {orientation === 'portrait' ? 'Print vertically on the page.' : 'Print horizontally on the page.'}
           </small>
         </div>
 
+        {/* Summary */}
         <div className="print-summary">
-          <div>
-            <span>Document</span>
-            <strong>{file.name}</strong>
-          </div>
-          <div>
-            <span>Pages</span>
-            <strong>{pages === 'all' ? 'All' : customPages || 'Custom'}</strong>
-          </div>
-          <div>
-            <span>Copies</span>
-            <strong>{copies}</strong>
-          </div>
-          <div>
-            <span>Color</span>
-            <strong>{colorMode === 'color' ? 'Color' : 'B&W'}</strong>
-          </div>
-          <div>
-            <span>Paper</span>
-            <strong>
-              {selectedPaper.label} ({selectedPaper.dimensions})
-            </strong>
-          </div>
-          <div>
-            <span>Orientation</span>
-            <strong>
-              {orientation === 'portrait' ? 'Portrait' : 'Landscape'}
-            </strong>
-          </div>
+          <div><span>Document</span><strong>{file.name}</strong></div>
+          <div><span>Pages</span><strong>{pages === 'all' ? 'All' : customPages || 'Custom'}</strong></div>
+          <div><span>Copies</span><strong>{copies}</strong></div>
+          <div><span>Color</span><strong>{colorMode === 'color' ? 'Color' : 'B&W'}</strong></div>
+          <div><span>Paper</span><strong>{selectedPaper.label} ({selectedPaper.dimensions})</strong></div>
+          <div><span>Orientation</span><strong>{orientation === 'portrait' ? 'Portrait' : 'Landscape'}</strong></div>
         </div>
 
-        <button type="button" className="primary-button continue-print-button">
-          Continue to Print
-        </button>
+        <button type="button" className="primary-button continue-print-button">Continue to Print</button>
       </aside>
     </section>
   );
