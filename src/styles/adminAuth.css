@@ -9,36 +9,61 @@
 .admin-auth-page {
   position: relative;
   display: flex;
-  min-height: 100svh;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  min-height: 100svh;
   padding: 40px 24px;
+  overflow: hidden;
+
   background: var(--color-paper);
   color: var(--color-ink);
 }
 
+/* Background Grid */
 .admin-auth-grid {
   position: absolute;
   inset: 0;
+  z-index: 0;
+
   opacity: 0.55;
-  background-image: linear-gradient(rgba(23,23,23,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(23,23,23,.035) 1px, transparent 1px);
+  background-image:
+    linear-gradient(
+      rgba(23, 23, 23, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(23, 23, 23, 0.035) 1px,
+      transparent 1px
+    );
   background-size: 56px 56px;
-  mask-image: linear-gradient(to bottom, black, transparent 88%);
+
+  mask-image: linear-gradient(
+    to bottom,
+    black,
+    transparent 88%
+  );
+
   pointer-events: none;
 }
 
+/* Decorative Glow */
 .admin-auth-glow {
   position: absolute;
   top: -180px;
   right: -140px;
+  z-index: 0;
+
   width: 520px;
   height: 520px;
+
   border-radius: 50%;
   background: var(--color-accent-soft);
   filter: blur(4px);
+
   pointer-events: none;
 }
+
 
 /* =========================================================
    02. AUTH SHELL
@@ -47,21 +72,32 @@
 .admin-auth-shell {
   position: relative;
   z-index: 1;
+
   width: min(100%, 460px);
 }
 
+/* Back Navigation */
 .admin-auth-back {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+
   margin-bottom: 18px;
+
   color: var(--color-ink-soft);
   font-size: 13px;
   font-weight: 700;
-  transition: color var(--transition-fast), transform var(--transition-fast);
+
+  transition:
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.admin-auth-back:hover { color: var(--color-accent); transform: translateX(-2px); }
+.admin-auth-back:hover {
+  color: var(--color-accent);
+  transform: translateX(-2px);
+}
+
 
 /* =========================================================
    03. AUTH CARD
@@ -69,99 +105,389 @@
 
 .admin-auth-card {
   padding: 34px;
+
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  background: rgba(255,255,255,.96);
+
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-soft);
+
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
-.admin-auth-brand { display: flex; justify-content: center; margin-bottom: 30px; }
-.admin-auth-brand .brand-logo { transform: scale(1.02); }
+/* Brand */
+.admin-auth-brand {
+  display: flex;
+  justify-content: center;
+
+  margin-bottom: 30px;
+}
+
+.admin-auth-brand .brand-logo {
+  transform: scale(1.02);
+}
+
 
 /* =========================================================
    04. AUTH HEADING
    ========================================================= */
 
-.admin-auth-heading { margin-bottom: 24px; text-align: center; }
-.admin-auth-heading .flow-eyebrow { margin-bottom: 12px; }
-.admin-auth-heading h1 { margin: 0 0 9px; font-family: var(--font-heading); font-size: clamp(30px,7vw,38px); font-weight: 800; line-height: 1.05; letter-spacing: -.05em; }
-.admin-auth-heading p { max-width: 350px; margin: 0 auto; color: var(--color-muted); font-size: 13px; line-height: 1.6; }
+.admin-auth-heading {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.admin-auth-heading .flow-eyebrow {
+  margin-bottom: 12px;
+}
+
+.admin-auth-heading h1 {
+  margin: 0 0 9px;
+
+  font-family: var(--font-heading);
+  font-size: clamp(30px, 7vw, 38px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+
+.admin-auth-heading p {
+  max-width: 350px;
+  margin: 0 auto;
+
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 
 /* =========================================================
    05. AUTH TABS
    ========================================================= */
 
-.admin-auth-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; margin-bottom: 22px; padding: 4px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-paper); }
-.admin-auth-tabs button { min-height: 42px; border: 0; border-radius: 8px; background: transparent; color: var(--color-muted); font-size: 13px; font-weight: 800; cursor: pointer; transition: color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast); }
-.admin-auth-tabs button:hover { color: var(--color-ink); }
-.admin-auth-tabs button.active { background: var(--color-surface); color: var(--color-accent); box-shadow: 0 2px 9px rgba(23,23,23,.07); }
+.admin-auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+
+  margin-bottom: 22px;
+  padding: 4px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+
+  background: var(--color-paper);
+}
+
+.admin-auth-tabs button {
+  min-height: 42px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--color-muted);
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.admin-auth-tabs button:hover {
+  color: var(--color-ink);
+}
+
+.admin-auth-tabs button.active {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: 0 2px 9px rgba(23, 23, 23, 0.07);
+}
+
 
 /* =========================================================
    06. AUTH FORM
    ========================================================= */
 
-.admin-auth-form { display: grid; gap: 17px; }
-.admin-auth-field { display: grid; gap: 8px; }
-.admin-auth-field > span { color: var(--color-ink); font-size: 12px; font-weight: 800; }
-.admin-auth-input-wrap { display: flex; align-items: center; min-height: 48px; gap: 10px; padding: 0 13px; border: 1px solid var(--color-line); border-radius: 11px; background: var(--color-surface); color: var(--color-muted); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
-.admin-auth-input-wrap:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
-.admin-auth-input-wrap > svg { flex: 0 0 auto; }
-.admin-auth-input-wrap input { width: 100%; min-width: 0; height: 46px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--color-ink); font-size: 14px; }
-.admin-auth-input-wrap input::placeholder { color: #a3a3a3; }
-.admin-auth-password-toggle { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--color-muted); cursor: pointer; }
-.admin-auth-password-toggle:hover { background: var(--color-paper); color: var(--color-ink); }
+.admin-auth-form {
+  display: grid;
+  gap: 17px;
+}
+
+/* Form Field */
+.admin-auth-field {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-auth-field > span {
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+/* Input Wrapper */
+.admin-auth-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 48px;
+  padding: 0 13px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 11px;
+
+  background: var(--color-surface);
+  color: var(--color-muted);
+
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.admin-auth-input-wrap:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.admin-auth-input-wrap > svg {
+  flex: 0 0 auto;
+}
+
+
+/* Input */
+.admin-auth-input-wrap input {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+  color: var(--color-ink);
+
+  font-size: 14px;
+}
+
+.admin-auth-input-wrap input::placeholder {
+  color: #a3a3a3;
+}
+
+
+/* Password Toggle */
+.admin-auth-password-toggle {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: var(--color-muted);
+
+  cursor: pointer;
+}
+
+.admin-auth-password-toggle:hover {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
 
 /* =========================================================
    07. FORM FEEDBACK
    ========================================================= */
 
-.admin-auth-message { margin: -2px 0 0; padding: 11px 12px; border: 1px solid transparent; border-radius: 9px; font-size: 12px; font-weight: 650; line-height: 1.45; }
-.admin-auth-message.is-error { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
-.admin-auth-message.is-success { border-color: #bbf7d0; background: #f0fdf4; color: var(--color-success); }
+.admin-auth-message {
+  margin: -2px 0 0;
+  padding: 11px 12px;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+/* Error */
+.admin-auth-message.is-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Success */
+.admin-auth-message.is-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: var(--color-success);
+}
+
 
 /* =========================================================
-   08. AUTH SUBMIT
+   08. AUTH SUBMIT BUTTON
    ========================================================= */
 
-.admin-auth-submit { width: 100%; min-height: 50px; margin-top: 2px; border: 1px solid var(--color-accent); border-radius: 11px; color: #fff; font-size: 14px; font-weight: 800; box-shadow: 0 9px 24px rgba(232,93,42,.2); }
-.admin-auth-submit:hover { transform: translateY(-1px); }
-.admin-auth-submit:active { transform: translateY(0); }
+.admin-auth-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 2px;
+
+  border: 1px solid var(--color-accent);
+  border-radius: 11px;
+
+  color: #000000;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  box-shadow: 0 9px 24px rgba(232, 93, 42, 0.2);
+}
+
+.admin-auth-submit:hover {
+  transform: translateY(-1px);
+}
+
+.admin-auth-submit:active {
+  transform: translateY(0);
+}
+
 
 /* =========================================================
    09. AUTH FOOTER
    ========================================================= */
 
-.admin-auth-switch { margin: 22px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.5; text-align: center; }
-.admin-auth-switch button { padding: 0; border: 0; background: transparent; color: var(--color-accent-dark); font-weight: 800; cursor: pointer; }
-.admin-auth-switch button:hover { text-decoration: underline; }
-.admin-auth-note { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--color-line); color: var(--color-muted); font-size: 10px; line-height: 1.55; text-align: center; }
+/* Login / Signup Switch */
+.admin-auth-switch {
+  margin: 22px 0 0;
+
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.admin-auth-switch button {
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+  color: var(--color-accent-dark);
+
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.admin-auth-switch button:hover {
+  text-decoration: underline;
+}
+
+
+/* Authentication Note */
+.admin-auth-note {
+  margin: 20px 0 0;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--color-line);
+
+  color: var(--color-muted);
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
+}
+
 
 /* =========================================================
    10. RESPONSIVE — MOBILE
    ========================================================= */
 
 @media (max-width: 639px) {
-  .admin-auth-page { align-items: flex-start; padding: 24px 16px 34px; }
-  .admin-auth-glow { top: -190px; right: -190px; width: 380px; height: 380px; }
-  .admin-auth-shell { width: 100%; }
-  .admin-auth-back { margin-bottom: 14px; }
-  .admin-auth-card { padding: 25px 18px 22px; border-radius: 19px; }
-  .admin-auth-brand { margin-bottom: 24px; }
-  .admin-auth-heading { margin-bottom: 20px; }
-  .admin-auth-heading h1 { font-size: 30px; }
-  .admin-auth-tabs { margin-bottom: 19px; }
-  .admin-auth-form { gap: 15px; }
+
+  /* Page */
+  .admin-auth-page {
+    align-items: flex-start;
+
+    padding: 24px 16px 34px;
+  }
+
+  /* Background */
+  .admin-auth-glow {
+    top: -190px;
+    right: -190px;
+
+    width: 380px;
+    height: 380px;
+  }
+
+  /* Shell */
+  .admin-auth-shell {
+    width: 100%;
+  }
+
+  .admin-auth-back {
+    margin-bottom: 14px;
+  }
+
+  /* Card */
+  .admin-auth-card {
+    padding: 25px 18px 22px;
+
+    border-radius: 19px;
+  }
+
+  /* Brand */
+  .admin-auth-brand {
+    margin-bottom: 24px;
+  }
+
+  /* Heading */
+  .admin-auth-heading {
+    margin-bottom: 20px;
+  }
+
+  .admin-auth-heading h1 {
+    font-size: 30px;
+  }
+
+  /* Tabs */
+  .admin-auth-tabs {
+    margin-bottom: 19px;
+  }
+
+  /* Form */
+  .admin-auth-form {
+    gap: 15px;
+  }
 }
+
 
 /* =========================================================
    11. ACCESSIBILITY — REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
   .admin-auth-back,
   .admin-auth-tabs button,
   .admin-auth-input-wrap,
-  .admin-auth-submit { transition: none; }
+  .admin-auth-submit {
+    transition: none;
+  }
 }
