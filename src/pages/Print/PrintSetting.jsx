@@ -5,9 +5,6 @@ import {
   Minus,
   Plus,
   X,
-  Palette,
-  Ruler,
-  RotateCw,
 } from 'lucide-react';
 
 const PAPER_SIZES = [
@@ -47,7 +44,8 @@ export default function PrintSetting({
   if (!file || !previewUrl) return null;
 
   const isPdf = file.type === 'application/pdf';
-  const selectedPaper = PAPER_SIZES.find((paper) => paper.value === paperSize) || PAPER_SIZES[0];
+  const selectedPaper =
+    PAPER_SIZES.find((paper) => paper.value === paperSize) || PAPER_SIZES[0];
 
   return (
     <section className="document-workspace">
@@ -187,10 +185,7 @@ export default function PrintSetting({
 
         {/* Print Color */}
         <div className="option-section">
-          <div className="option-heading-row">
-            <span className="option-label">Print Color</span>
-            <Palette size={17} aria-hidden="true" />
-          </div>
+          <span className="option-label">Print Color</span>
 
           <div className="option-segmented color-mode-control">
             <button
@@ -198,7 +193,7 @@ export default function PrintSetting({
               className={colorMode === 'color' ? 'active' : ''}
               onClick={() => setColorMode('color')}
             >
-              <span className="color-preview color-preview-full" />
+              <span className="color-preview color-preview-full" aria-hidden="true" />
               Color
             </button>
 
@@ -207,7 +202,7 @@ export default function PrintSetting({
               className={colorMode === 'bw' ? 'active' : ''}
               onClick={() => setColorMode('bw')}
             >
-              <span className="color-preview color-preview-bw" />
+              <span className="color-preview color-preview-bw" aria-hidden="true" />
               B&amp;W
             </button>
           </div>
@@ -221,10 +216,7 @@ export default function PrintSetting({
 
         {/* Paper Size */}
         <div className="option-section">
-          <div className="option-heading-row">
-            <span className="option-label">Paper Size</span>
-            <Ruler size={17} aria-hidden="true" />
-          </div>
+          <span className="option-label">Paper Size</span>
 
           <div className="select-control">
             <select
@@ -247,10 +239,7 @@ export default function PrintSetting({
 
         {/* Orientation */}
         <div className="option-section">
-          <div className="option-heading-row">
-            <span className="option-label">Orientation</span>
-            <RotateCw size={17} aria-hidden="true" />
-          </div>
+          <span className="option-label">Orientation</span>
 
           <div className="option-segmented orientation-control">
             <button
@@ -259,7 +248,6 @@ export default function PrintSetting({
               onClick={() => setOrientation('portrait')}
               aria-pressed={orientation === 'portrait'}
             >
-              <span className="orientation-icon portrait-icon" />
               Portrait
             </button>
 
@@ -269,13 +257,14 @@ export default function PrintSetting({
               onClick={() => setOrientation('landscape')}
               aria-pressed={orientation === 'landscape'}
             >
-              <span className="orientation-icon landscape-icon" />
               Landscape
             </button>
           </div>
 
           <small className="option-help">
-            Choose how the document should be positioned on the paper.
+            {orientation === 'portrait'
+              ? 'Print vertically on the page.'
+              : 'Print horizontally on the page.'}
           </small>
         </div>
 
@@ -288,7 +277,7 @@ export default function PrintSetting({
 
           <div>
             <span>Pages</span>
-            <strong>{pages === 'all' ? 'All pages' : customPages || 'Custom pages'}</strong>
+            <strong>{pages === 'all' ? 'All' : customPages || 'Custom'}</strong>
           </div>
 
           <div>
@@ -303,7 +292,9 @@ export default function PrintSetting({
 
           <div>
             <span>Paper</span>
-            <strong>{selectedPaper.label}</strong>
+            <strong>
+              {selectedPaper.label} ({selectedPaper.dimensions})
+            </strong>
           </div>
 
           <div>
@@ -314,11 +305,8 @@ export default function PrintSetting({
           </div>
         </div>
 
-        <button
-          type="button"
-          className="primary-button continue-print-button"
-        >
-          Continue
+        <button type="button" className="primary-button continue-print-button">
+          Continue to Print
         </button>
       </aside>
     </section>
