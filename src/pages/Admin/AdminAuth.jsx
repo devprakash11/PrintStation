@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import BrandLogo from '../../components/BrandLogo';
 import '../../styles/allPage.css';
+import '../../styles/adminAuth.css';
 
 const STORAGE_KEY = 'printstation_admin_accounts';
+const SESSION_KEY = 'printstation_admin_session';
 
 function getAccounts() {
   try {
@@ -11,6 +13,10 @@ function getAccounts() {
   } catch {
     return [];
   }
+}
+
+function createAccountId() {
+  return crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export default function AdminAuth() {
@@ -32,10 +38,12 @@ export default function AdminAuth() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    const name = form.name.trim();
     const email = form.email.trim().toLowerCase();
     const password = form.password;
 
-    if (!email || !password || (mode === 'signup' && !form.name.trim())) {
+    if (!email || !password || (mode === 'signup' && !name)) {
       setMessage({ type: 'error', text: 'Please complete all required fields.' });
       return;
     }
@@ -47,26 +55,34 @@ export default function AdminAuth() {
         setMessage({ type: 'error', text: 'Password must contain at least 6 characters.' });
         return;
       }
+
       if (accounts.some((account) => account.email === email)) {
         setMessage({ type: 'error', text: 'An admin account with this email already exists.' });
         return;
       }
 
-      const account = { id: crypto.randomUUID?.() || String(Date.now()), name: form.name.trim(), email, password };
+      const account = {
+        id: createAccountId(),
+        name,
+        email,
+        password,
+      };
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...accounts, account]));
-      localStorage.setItem('printstation_admin_session', JSON.stringify({ name: account.name, email: account.email }));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ name: account.name, email: account.email }));
       setMessage({ type: 'success', text: 'Account created successfully.' });
       setTimeout(() => { window.location.href = '/admin'; }, 500);
       return;
     }
 
     const account = accounts.find((item) => item.email === email && item.password === password);
+
     if (!account) {
       setMessage({ type: 'error', text: 'Invalid email or password.' });
       return;
     }
 
-    localStorage.setItem('printstation_admin_session', JSON.stringify({ name: account.name, email: account.email }));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ name: account.name, email: account.email }));
     setMessage({ type: 'success', text: 'Login successful.' });
     setTimeout(() => { window.location.href = '/admin'; }, 500);
   };
@@ -78,21 +94,32 @@ export default function AdminAuth() {
 
       <section className="admin-auth-shell" aria-label="Admin authentication">
         <a className="admin-auth-back" href="/" aria-label="Back to PrintStation home">
-          <ArrowLeft size={16} /> Back to home
+          <ArrowLeft size={16} />
+          Back to home
         </a>
 
         <div className="admin-auth-card">
-          <div className="admin-auth-brand"><BrandLogo /></div>
+          <div className="admin-auth-brand">
+            <BrandLogo />
+          </div>
 
           <div className="admin-auth-heading">
             <span className="flow-eyebrow"><i /> Admin Portal</span>
             <h1>{mode === 'login' ? 'Welcome back.' : 'Create your account.'}</h1>
-            <p>{mode === 'login' ? 'Sign in to manage your PrintStation printer portal.' : 'Create an administrator account to access your printer portal.'}</p>
+            <p>
+              {mode === 'login'
+                ? 'Sign in to manage your PrintStation printer portal.'
+                : 'Create an administrator account to access your printer portal.'}
+            </p>
           </div>
 
           <div className="admin-auth-tabs" role="tablist" aria-label="Authentication mode">
-            <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')} role="tab" aria-selected={mode === 'login'}>Login</button>
-            <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
+            <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')} role="tab" aria-selected={mode === 'login'}>
+              Login
+            </button>
+            <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')} role="tab" aria-selected={mode === 'signup'}>
+              Sign up
+            </button>
           </div>
 
           <form className="admin-auth-form" onSubmit={handleSubmit} noValidate>
