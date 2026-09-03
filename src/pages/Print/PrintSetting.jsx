@@ -219,9 +219,9 @@ export default function PrintSetting({
             ) : (
               <img src={previewUrl} alt="Uploaded document preview" className="image-preview" />
             )}
-            <span className="preview-page-badge">
+            {/* <span className="preview-page-badge">
               {isPageCountLoading ? `Page ${previewPage}` : `Page ${previewPage} of ${pageCount}`}
-            </span>
+            </span> */}
           </div>
 
           <button type="button" className="preview-arrow preview-arrow-right" disabled={nextDisabled} onClick={() => goToPage(previewPage + 1)} aria-label="Next page">
@@ -360,13 +360,13 @@ export default function PrintSetting({
         </div>
       )}
 
-      {printComplete && !isPrinting && (
+      {/* {printComplete && !isPrinting && (
         <div className="print-complete-notice" role="status">
           <Check size={17} />
           <span>Print job processed successfully.</span>
           <button type="button" onClick={() => setPrintComplete(false)} aria-label="Dismiss print status"><X size={15} /></button>
         </div>
-      )}
+      )} */}
     </section>
   );
 }
