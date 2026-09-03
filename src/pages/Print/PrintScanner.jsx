@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, CheckCircle2, LoaderCircle, QrCode, ShieldCheck } from 'lucide-react';
 
+const QR_SCANNER_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+
 function parsePrinterQr(value) {
   const raw = String(value || '').trim();
+  if (!raw) return null;
+
   try {
     const parsed = JSON.parse(raw);
     if (parsed && (parsed.printerId || parsed.id || parsed.model || parsed.name)) {
@@ -13,7 +17,7 @@ function parsePrinterQr(value) {
       };
     }
   } catch {
-    // Continue with plain-text QR formats.
+    // Continue with the supported plain-text format.
   }
 
   if (raw.toLowerCase().startsWith('printstation:')) {
@@ -25,7 +29,28 @@ function parsePrinterQr(value) {
     };
   }
 
-  return raw ? { id: raw, name: 'PrintStation Printer', model: '' } : null;
+  return { id: raw, name: 'PrintStation Printer', model: '' };
+}
+
+function loadQrScannerLibrary() {
+  if (window.Html5Qrcode) return Promise.resolve(window.Html5Qrcode);
+
+  const existing = document.querySelector(`script[src="${QR_SCANNER_URL}"]`);
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener('load', () => resolve(window.Html5Qrcode), { once: true });
+      existing.addEventListener('error', () => reject(new Error('QR library failed to load')), { once: true });
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = QR_SCANNER_URL;
+    script.async = true;
+    script.onload = () => window.Html5Qrcode ? resolve(window.Html5Qrcode) : reject(new Error('QR library loaded without Html5Qrcode'));
+    script.onerror = () => reject(new Error('QR library failed to load'));
+    document.head.appendChild(script);
+  });
 }
 
 export default function PrintScanner() {
@@ -36,36 +61,33 @@ export default function PrintScanner() {
 
   useEffect(() => {
     let cancelled = false;
-    let scanner;
+    let scanner = null;
 
-    const start = async () => {
+    async function startScanner() {
       try {
-        // html5-qrcode uses the browser camera APIs and provides a reliable
-        // QR decoder across mobile Chrome, Safari and Edge.
-        if (!window.Html5Qrcode) {
-          setStatus('error');
-          setError('QR scanner is still loading. Please refresh the page and try again.');
-          return;
-        }
-
-        scanner = new window.Html5Qrcode('printstation-qr-reader');
-        scannerRef.current = scanner;
-
-        const cameras = await window.Html5Qrcode.getCameras();
-        if (!cameras?.length) {
-          throw Object.assign(new Error('No camera found'), { name: 'NotFoundError' });
-        }
-
-        // Prefer the rear/environment camera on mobile devices.
-        const rearCamera = cameras.find((camera) => /back|rear|environment/i.test(camera.label));
-        const cameraId = rearCamera?.id || cameras[0].id;
-
+        const Html5Qrcode = await loadQrScannerLibrary();
         if (cancelled) return;
 
+        scanner = new Html5Qrcode('printstation-qr-reader', {
+          verbose: false,
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        });
+        scannerRef.current = scanner;
+
+        // Use the environment-facing camera directly. This avoids relying on
+        // camera labels, which are often empty until permission is granted.
         setStatus('scanning');
         await scanner.start(
-          cameraId,
-          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.68);
+              return { width: Math.min(size, 300), height: Math.min(size, 300) };
+            },
+            aspectRatio: 1,
+            disableFlip: false,
+          },
           async (decodedText) => {
             if (cancelled || printer) return;
             const detected = parsePrinterQr(decodedText);
@@ -73,26 +95,34 @@ export default function PrintScanner() {
 
             setPrinter(detected);
             setStatus('connected');
-            try { await scanner.stop(); } catch { /* already stopped */ }
+            try {
+              await scanner.stop();
+            } catch {
+              // Scanner may already have stopped.
+            }
           },
           () => {
-            // Decoder misses are expected while positioning the QR code.
+            // QR not found in the current frame; keep scanning.
           },
         );
       } catch (scanError) {
         if (cancelled) return;
         setStatus('error');
-        if (scanError?.name === 'NotAllowedError' || scanError?.name === 'PermissionDeniedError') {
-          setError('Camera permission was denied. Allow camera access for PrintStation and try again.');
-        } else if (scanError?.name === 'NotFoundError') {
+        const message = String(scanError?.message || '').toLowerCase();
+
+        if (scanError?.name === 'NotAllowedError' || scanError?.name === 'PermissionDeniedError' || message.includes('permission')) {
+          setError('Camera permission was denied. Allow camera access for PrintStation and tap Try again.');
+        } else if (scanError?.name === 'NotFoundError' || message.includes('camera') && message.includes('not found')) {
           setError('No camera was found on this device.');
+        } else if (message.includes('failed to load') || message.includes('library')) {
+          setError('The QR scanner library could not load. Check your internet connection and try again.');
         } else {
-          setError('Unable to start the camera scanner. Check browser camera permission and try again.');
+          setError('Unable to start the camera. Make sure this page is using HTTPS or localhost and camera access is allowed.');
         }
       }
-    };
+    }
 
-    start();
+    startScanner();
 
     return () => {
       cancelled = true;
