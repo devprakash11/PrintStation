@@ -54,13 +54,10 @@ export default function PrintScanner() {
 
       try {
         const supported = await window.BarcodeDetector.getSupportedFormats();
-        if (!supported.includes('qr_code')) {
-          throw new Error('QR scanning is not supported by this browser.');
-        }
+        if (!supported.includes('qr_code')) throw new Error('QR scanning is not supported by this browser.');
 
         const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
         detectorRef.current = detector;
-
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' } },
           audio: false,
@@ -90,7 +87,7 @@ export default function PrintScanner() {
               }
             }
           } catch {
-            // Camera frames can occasionally fail while the video is initializing.
+            // Ignore individual camera-frame detection failures and continue scanning.
           }
 
           frameRef.current = requestAnimationFrame(scan);
@@ -117,7 +114,7 @@ export default function PrintScanner() {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
     };
-  }, [printer]);
+  }, []);
 
   function handleNext() {
     if (!printer) return;
@@ -125,9 +122,7 @@ export default function PrintScanner() {
     window.location.href = '/print/upload';
   }
 
-  function handleRetry() {
-    window.location.reload();
-  }
+  function handleRetry() { window.location.reload(); }
 
   const isScanning = status === 'starting' || status === 'scanning';
 
@@ -157,18 +152,10 @@ export default function PrintScanner() {
                 <span className="scan-corner bottom-right" />
                 {isScanning && <span className="scan-line" />}
               </div>
-              {status === 'starting' && (
-                <div className="scanner-state"><LoaderCircle className="spin" size={30} /><strong>Starting camera…</strong></div>
-              )}
-              {status === 'unsupported' && (
-                <div className="scanner-state"><Camera size={30} /><strong>Camera scanner unavailable</strong><span>{error}</span></div>
-              )}
-              {status === 'error' && (
-                <div className="scanner-state"><Camera size={30} /><strong>Camera access needed</strong><span>{error}</span><button type="button" className="secondary-button" onClick={handleRetry}>Try again</button></div>
-              )}
-              {status === 'connected' && (
-                <div className="scanner-success"><CheckCircle2 size={38} /><strong>Printer found</strong></div>
-              )}
+              {status === 'starting' && <div className="scanner-state"><LoaderCircle className="spin" size={30} /><strong>Starting camera…</strong></div>}
+              {status === 'unsupported' && <div className="scanner-state"><Camera size={30} /><strong>Camera scanner unavailable</strong><span>{error}</span></div>}
+              {status === 'error' && <div className="scanner-state"><Camera size={30} /><strong>Camera access needed</strong><span>{error}</span><button type="button" className="secondary-button" onClick={handleRetry}>Try again</button></div>}
+              {status === 'connected' && <div className="scanner-success"><CheckCircle2 size={38} /><strong>Printer found</strong></div>}
             </div>
 
             <div className="scanner-status-row">
