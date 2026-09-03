@@ -13,8 +13,7 @@
     "vite": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest",
-    "pdfjs-dist": "latest"
+    "lucide-react": "latest"
   },
   "devDependencies": {}
 }
