@@ -1,29 +1,29 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   CalendarDays,
   ChevronRight,
+  CircleAlert,
   CircleHelp,
+  CheckCircle2,
+  Clock3,
   FileText,
   LayoutDashboard,
   LogOut,
   Menu,
+  Plus,
   Printer,
   QrCode,
   Settings,
+  TrendingUp,
   UserRound,
   Users,
   X,
-  Plus,
-  CheckCircle2,
-  CircleAlert,
-  Clock3,
-  TrendingDown,
-  TrendingUp,
 } from 'lucide-react';
-import '../../../styles/adminDashboard.css';
-
-const SESSION_KEY = 'printstation_admin_session';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext.jsx';
+import { printJobService } from '../../../services/printJobService.js';
+import { reportService } from '../../../services/reportService.js';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
@@ -35,47 +35,79 @@ const NAV_ITEMS = [
   { label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
-const ACTIVITIES = [
-  { status: 'Completed', type: 'success', printer: 'PRN-001', document: 'Annual_Report_2023.pdf', time: '10:42 AM' },
-  { status: 'Printing', type: 'warning', printer: 'PRN-005', document: 'Marketing_Brochure_V2.pdf', time: '10:38 AM' },
-  { status: 'Completed', type: 'success', printer: 'PRN-002', document: 'Employee_Handbook.docx', time: '10:15 AM' },
-  { status: 'Failed', type: 'danger', printer: 'PRN-012', document: 'Q3_Financials_Draft.xlsx', time: '09:55 AM' },
-  { status: 'Queued', type: 'neutral', printer: 'PRN-001', document: 'Design_Assets_Pack.zip', time: '09:30 AM' },
-];
+const STATUS_TYPE = {
+  completed: 'success',
+  processing: 'warning',
+  queued: 'neutral',
+  failed: 'danger',
+  cancelled: 'danger',
+};
 
-function getSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-  } catch {
-    return null;
-  }
+function formatTime(value) {
+  if (!value) return '—';
+  return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function StatCard({ icon: Icon, tone, label, value, trend }) {
+  return (
+    <article className="admin-stat-card">
+      <div className="admin-stat-top">
+        <span className={`admin-stat-icon is-${tone}`}><Icon size={21} /></span>
+        {trend != null && <span className="admin-stat-trend is-positive"><TrendingUp size={14} /> {trend}</span>}
+      </div>
+      <span className="admin-stat-label">{label}</span>
+      <strong>{value}</strong>
+    </article>
+  );
 }
 
 export default function AdminDashboard() {
-  const [session] = useState(getSession);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [range, setRange] = useState('Last 7 Days');
-  const [activeItem, setActiveItem] = useState('Dashboard');
+  const [overview, setOverview] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const displayName = useMemo(() => {
-    const name = session?.name?.trim();
-    return name || 'Admin';
-  }, [session]);
+  useEffect(() => {
+    let active = true;
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setError('');
+        const [overviewResponse, jobsResponse] = await Promise.all([
+          reportService.getOverview(),
+          printJobService.getAll(),
+        ]);
+        if (!active) return;
+        setOverview(overviewResponse?.data ?? null);
+        setJobs(Array.isArray(jobsResponse?.data) ? jobsResponse.data.slice(0, 5) : []);
+      } catch (err) {
+        if (active) setError(err.message || 'Unable to load dashboard data.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadDashboard();
+    return () => { active = false; };
+  }, []);
 
-  if (!session) {
-    window.location.replace('/admin');
-    return null;
-  }
+  const displayName = useMemo(() => user?.name?.trim() || 'Admin', [user]);
+  const totalPrinters = overview?.printers?.total ?? 0;
+  const onlinePrinters = overview?.printers?.online ?? 0;
+  const offlinePrinters = Math.max(0, totalPrinters - onlinePrinters);
+  const printJobsToday = overview?.printJobs?.total ?? 0;
 
-  const handleLogout = () => {
-    localStorage.removeItem(SESSION_KEY);
-    window.location.replace('/admin');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/admin', { replace: true });
   };
 
-  const handleNavigation = (item) => {
-    setActiveItem(item.label);
+  const handleNavigation = (path) => {
     setMobileOpen(false);
-    if (item.path) window.location.href = item.path;
+    navigate(path);
   };
 
   return (
@@ -87,18 +119,17 @@ export default function AdminDashboard() {
           <button className="admin-sidebar-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
 
-        <button className="admin-new-job" type="button" onClick={() => (window.location.href = '/print/upload')}><Plus size={19} />New Print Job</button>
+        <button className="admin-new-job" type="button" onClick={() => handleNavigation('/print/upload')}><Plus size={19} />New Print Job</button>
 
         <nav className="admin-nav" aria-label="Admin navigation">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.label;
-            return <button key={item.label} type="button" className={`admin-nav-item ${isActive ? 'is-active' : ''}`} onClick={() => handleNavigation(item)}><Icon size={20} strokeWidth={1.9} /><span>{item.label}</span></button>;
+            return <button key={item.label} type="button" className={`admin-nav-item ${item.label === 'Dashboard' ? 'is-active' : ''}`} onClick={() => handleNavigation(item.path)}><Icon size={20} strokeWidth={1.9} /><span>{item.label}</span></button>;
           })}
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-nav-item" type="button" onClick={() => handleNavigation({ label: 'Help Center', path: '/admin/help' })}><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
+          <button className="admin-nav-item" type="button" onClick={() => handleNavigation('/admin/help')}><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
           <button className="admin-nav-item" type="button" onClick={handleLogout}><LogOut size={20} strokeWidth={1.9} /><span>Logout</span></button>
         </div>
       </aside>
@@ -120,25 +151,33 @@ export default function AdminDashboard() {
         </header>
 
         <section className="admin-content" aria-label="Dashboard overview">
+          {error && <div className="admin-dashboard-error" role="alert"><CircleAlert size={16} />{error}</div>}
+
           <div className="admin-stat-grid">
-            <article className="admin-stat-card"><div className="admin-stat-top"><span className="admin-stat-icon is-blue"><Printer size={21} /></span><span className="admin-stat-trend is-positive"><TrendingUp size={14} /> +2%</span></div><span className="admin-stat-label">Total Printers</span><strong>24</strong></article>
-            <article className="admin-stat-card"><div className="admin-stat-top"><span className="admin-stat-icon is-green"><CheckCircle2 size={21} /></span><span className="admin-stat-trend is-positive"><TrendingUp size={14} /> +5%</span></div><span className="admin-stat-label">Online</span><strong>18 <i className="admin-live-dot" /></strong></article>
-            <article className="admin-stat-card"><div className="admin-stat-top"><span className="admin-stat-icon is-red"><CircleAlert size={21} /></span><span className="admin-stat-trend is-negative"><TrendingDown size={14} /> -1%</span></div><span className="admin-stat-label">Offline</span><strong>4 <i className="admin-offline-dot" /></strong></article>
-            <article className="admin-stat-card"><div className="admin-stat-top"><span className="admin-stat-icon is-indigo"><FileText size={21} /></span><span className="admin-stat-trend is-positive"><TrendingUp size={14} /> +12%</span></div><span className="admin-stat-label">Print Jobs Today</span><strong>126</strong></article>
+            <StatCard icon={Printer} tone="blue" label="Total Printers" value={loading ? '—' : totalPrinters} />
+            <StatCard icon={CheckCircle2} tone="green" label="Online" value={loading ? '—' : onlinePrinters} />
+            <StatCard icon={CircleAlert} tone="red" label="Offline" value={loading ? '—' : offlinePrinters} />
+            <StatCard icon={FileText} tone="indigo" label="Print Jobs" value={loading ? '—' : printJobsToday} />
           </div>
 
           <section className="admin-activity-card">
-            <div className="admin-section-header"><div><h2>Recent Activity</h2><span>Latest printer and print-job activity</span></div><button type="button" onClick={() => handleNavigation({ label: 'Print Jobs', path: '/admin/print-jobs' })}>View All <ChevronRight size={17} /></button></div>
+            <div className="admin-section-header"><div><h2>Recent Activity</h2><span>Latest printer and print-job activity</span></div><button type="button" onClick={() => handleNavigation('/admin/print-jobs')}>View All <ChevronRight size={17} /></button></div>
             <div className="admin-activity-table-wrap">
               <table className="admin-activity-table">
-                <thead><tr><th>Status</th><th>Printer ID</th><th>Document Name</th><th>Time</th><th aria-label="Action" /></tr></thead>
-                <tbody>{ACTIVITIES.map((activity) => <tr key={`${activity.printer}-${activity.document}`}><td><span className={`admin-status is-${activity.type}`}><i />{activity.status}</span></td><td>{activity.printer}</td><td className="admin-document-name">{activity.document}</td><td>{activity.time}</td><td><button className="admin-row-action" type="button" aria-label={`Open ${activity.document}`}><ChevronRight size={17} /></button></td></tr>)}</tbody>
+                <thead><tr><th>Status</th><th>Printer</th><th>Document / Job</th><th>Time</th><th aria-label="Action" /></tr></thead>
+                <tbody>
+                  {!loading && jobs.length === 0 && <tr><td colSpan="5" className="admin-table-empty">No print jobs have been created yet.</td></tr>}
+                  {jobs.map((job) => <tr key={job.id}><td><span className={`admin-status is-${STATUS_TYPE[job.status] || 'neutral'}`}><i />{job.status}</span></td><td>{job.printer_name || 'Unassigned'}</td><td className="admin-document-name">{job.file_count ? `${job.file_count} file${job.file_count > 1 ? 's' : ''}` : `Job ${job.id?.slice(0, 8)}`}</td><td>{formatTime(job.created_at)}</td><td><button className="admin-row-action" type="button" onClick={() => handleNavigation('/admin/print-jobs')} aria-label="Open print jobs"><ChevronRight size={17} /></button></td></tr>)}
+                </tbody>
               </table>
             </div>
-            <div className="admin-activity-mobile-list">{ACTIVITIES.map((activity) => <article key={`${activity.printer}-mobile-${activity.document}`}><div><span className={`admin-status is-${activity.type}`}><i />{activity.status}</span><strong>{activity.document}</strong><span>{activity.printer} · {activity.time}</span></div><ChevronRight size={18} /></article>)}</div>
+            <div className="admin-activity-mobile-list">
+              {!loading && jobs.length === 0 && <div className="admin-table-empty">No print jobs have been created yet.</div>}
+              {jobs.map((job) => <article key={`mobile-${job.id}`}><div><span className={`admin-status is-${STATUS_TYPE[job.status] || 'neutral'}`}><i />{job.status}</span><strong>{job.printer_name || 'Unassigned printer'}</strong><span>{job.file_count || 0} file(s) · {formatTime(job.created_at)}</span></div><ChevronRight size={18} /></article>)}
+            </div>
           </section>
 
-          <div className="admin-dashboard-note"><Clock3 size={16} /><span>Dashboard data is currently demo data. Connect your printer/API service for live statistics.</span></div>
+          <div className="admin-dashboard-note"><Clock3 size={16} /><span>Dashboard statistics are loaded from the PrintStation API.</span></div>
         </section>
       </main>
     </div>
