@@ -9,6 +9,7 @@ import PrintJob from './pages/Admin/PrintJob';
 import Users from './pages/Admin/Users';
 import Reports from './pages/Admin/Reports';
 import Settings from './pages/Admin/Settings';
+import HelpCenter from './pages/Admin/HelpCenter';
 
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
@@ -21,6 +22,7 @@ export default function App() {
   if (path === '/admin/users') return <Users />;
   if (path === '/admin/reports') return <Reports />;
   if (path === '/admin/settings') return <Settings />;
+  if (path === '/admin/help') return <HelpCenter />;
   if (path === '/admin/dashboard') return <AdminDashboard />;
   if (path === '/admin') return <AdminAuth />;
 
