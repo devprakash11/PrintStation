@@ -20,6 +20,7 @@ export default function App() {
       <Route path="/print" element={<PrintScanner />} />
       <Route path="/print/upload" element={<PrintUpload />} />
       <Route path="/admin" element={<AdminAuth />} />
+      <Route path="/admin/reset-password" element={<AdminAuth />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
