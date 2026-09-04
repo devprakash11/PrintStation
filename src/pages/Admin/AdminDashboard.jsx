@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   { label: 'Print Jobs', icon: FileText, path: '/admin/print-jobs' },
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Reports', icon: BarChart3, path: '/admin/reports' },
-  { label: 'Settings', icon: Settings },
+  { label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
 const ACTIVITIES = [
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-nav-item" type="button"><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
+          <button className="admin-nav-item" type="button" onClick={() => handleNavigation({ label: 'Help Center', path: '/admin/help' })}><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
           <button className="admin-nav-item" type="button" onClick={handleLogout}><LogOut size={20} strokeWidth={1.9} /><span>Logout</span></button>
         </div>
       </aside>
