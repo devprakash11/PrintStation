@@ -6,6 +6,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import PrinterManagement from './pages/Admin/PrinterManagement';
 import QrCodeManagement from './pages/Admin/QrCodeManagement';
 import PrintJob from './pages/Admin/PrintJob';
+import Users from './pages/Admin/Users';
 
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
@@ -15,6 +16,7 @@ export default function App() {
   if (path === '/admin/qr-codes') return <QrCodeManagement />;
   if (path === '/admin/printers') return <PrinterManagement />;
   if (path === '/admin/print-jobs') return <PrintJob />;
+  if (path === '/admin/users') return <Users />;
   if (path === '/admin/dashboard') return <AdminDashboard />;
   if (path === '/admin') return <AdminAuth />;
 
