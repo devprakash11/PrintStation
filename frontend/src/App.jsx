@@ -3,7 +3,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import Home from './pages/Home/Home';
 import PrintScanner from './pages/Print/PrintScanner';
 import PrintUpload from './pages/Print/PrintUpload';
-import AdminAuth from './pages/Admin/Auth/AdminAuth';
+import AdminAuth from './pages/Admin/Auth/AdminAuthSecure';
 import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard';
 import PrinterManagement from './pages/Admin/Printers/PrinterManagement';
 import QrCodeManagement from './pages/Admin/QRCodes/QrCodeManagement';
@@ -21,7 +21,6 @@ export default function App() {
       <Route path="/print/upload" element={<PrintUpload />} />
       <Route path="/admin" element={<AdminAuth />} />
       <Route path="/admin/reset-password" element={<AdminAuth />} />
-
       <Route element={<ProtectedRoute />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/printers" element={<PrinterManagement />} />
@@ -32,7 +31,6 @@ export default function App() {
         <Route path="/admin/settings" element={<Settings />} />
         <Route path="/admin/help" element={<HelpCenter />} />
       </Route>
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
