@@ -1,6 +1,6 @@
 /* =========================================================
    PRINTSTATION — QR CODE MANAGEMENT
-   Brand-aligned admin QR workspace
+   Brand-aligned admin QR workspace.
    ========================================================= */
 
 /* =========================================================
@@ -22,8 +22,8 @@
 .qr-toolbar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto auto;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
   margin-bottom: 18px;
 }
 
@@ -31,9 +31,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 50px;
   padding: 0 13px;
-  border: 1px solid var(--admin-line);
+  border: 1px solid var(--admin-line-strong);
   border-radius: var(--admin-radius-md);
   background: var(--admin-surface);
   color: var(--admin-muted);
@@ -49,14 +49,14 @@
 .qr-search input {
   width: 100%;
   min-width: 0;
-  height: 46px;
+  height: 48px;
   padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--admin-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .qr-search input::placeholder {
@@ -77,8 +77,8 @@
 }
 
 .qr-search button:hover {
-  background: var(--admin-neutral-soft);
-  color: var(--admin-ink);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
 }
 
 .qr-filter-button,
@@ -87,18 +87,24 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  padding: 0 16px;
+  min-height: 50px;
+  padding: 0 18px;
   border-radius: var(--admin-radius-md);
   font-size: 13px;
   font-weight: 800;
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  transition: transform var(--admin-transition), background var(--admin-transition), border-color var(--admin-transition), box-shadow var(--admin-transition), color var(--admin-transition);
+  transition:
+    transform var(--admin-transition),
+    background var(--admin-transition),
+    border-color var(--admin-transition),
+    box-shadow var(--admin-transition),
+    color var(--admin-transition);
 }
 
 .qr-filter-button {
-  border: 1px solid var(--admin-line);
+  border: 1px solid var(--admin-line-strong);
   background: var(--admin-surface);
   color: var(--admin-ink-soft);
 }
@@ -115,6 +121,7 @@
   color: var(--admin-accent);
 }
 
+/* Match the primary Add Printer action used throughout the admin panel. */
 .qr-generate-button {
   border: 1px solid var(--admin-accent);
   background: var(--admin-accent);
@@ -125,11 +132,17 @@
 .qr-generate-button:hover:not(:disabled) {
   background: var(--admin-accent-dark);
   transform: translateY(-1px);
+  box-shadow: var(--admin-shadow-accent);
+}
+
+.qr-generate-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .qr-generate-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* =========================================================
