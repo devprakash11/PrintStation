@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, UserRound } from 'lucide-rea
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from '../../../components/common/BrandLogo';
 import { useAuth } from '../../../context/AuthContext.jsx';
+import '../../../styles/adminAuth.css';
 
 export default function AdminAuth() {
   const [mode, setMode] = useState('login');

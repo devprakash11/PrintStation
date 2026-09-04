@@ -54,6 +54,18 @@
   /* Motion */
   --transition-fast: 0.2s ease;
   --transition-default: 0.25s ease;
+
+  /* Shorthand aliases (used in allPage.css) */
+  --paper: var(--color-paper);
+  --surface: var(--color-surface);
+  --line: var(--color-line);
+  --accent: var(--color-accent);
+  --accent-dark: var(--color-accent-dark);
+  --accent-soft: var(--color-accent-soft);
+  --ink: var(--color-ink);
+  --ink-soft: var(--color-ink-soft);
+  --muted: var(--color-muted);
+  --success: var(--color-success);
 }
 
 

@@ -1,16 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  FileText,
-  FileUp,
-  FolderOpen,
-  Plus,
-  Printer,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle2, FolderOpen, FileUp } from 'lucide-react';
 import PrintSetting from './PrintSetting';
-import '../../styles/printUpload.css';
 
 const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
@@ -24,16 +14,10 @@ const DEFAULT_PRINT_SETTINGS = {
   orientation: 'portrait',
 };
 
-const formatFileSize = (bytes) => {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-};
-
 export default function PrintUpload() {
   const inputRef = useRef(null);
-  const [files, setFiles] = useState([]);
-  const filesRef = useRef([]);
-  const [activeFileIndex, setActiveFileIndex] = useState(0);
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
@@ -47,20 +31,18 @@ export default function PrintUpload() {
 
   let printer = null;
   try {
-    printer = JSON.parse(sessionStorage.getItem('printstation_printer') || 'null');
+    printer = JSON.parse(
+      sessionStorage.getItem('printstation_printer') || 'null'
+    );
   } catch {
     printer = null;
   }
 
   useEffect(() => {
-    filesRef.current = files;
-  }, [files]);
-
-  useEffect(() => {
     return () => {
-      filesRef.current.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, []);
+  }, [previewUrl]);
 
   const resetPrintSettings = () => {
     setPages(DEFAULT_PRINT_SETTINGS.pages);
@@ -72,75 +54,41 @@ export default function PrintUpload() {
     setOrientation(DEFAULT_PRINT_SETTINGS.orientation);
   };
 
-  const addFiles = (selectedFiles) => {
-    const incomingFiles = Array.from(selectedFiles || []);
-    if (!incomingFiles.length) return;
+  const handleFile = (selectedFile) => {
+    if (!selectedFile) return;
 
-    const invalidFiles = incomingFiles.filter((file) => !ACCEPTED_TYPES.includes(file.type));
-    setError(invalidFiles.length ? 'Only PDF, JPG, and PNG files are supported.' : '');
+    if (!ACCEPTED_TYPES.includes(selectedFile.type)) {
+      setError('Please upload a JPG, PNG, or PDF file.');
+      return;
+    }
 
-    const validFiles = incomingFiles.filter((file) => ACCEPTED_TYPES.includes(file.type));
-    if (!validFiles.length) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
 
-    setFiles((currentFiles) => {
-      const existingKeys = new Set(
-        currentFiles.map(({ file }) => `${file.name}-${file.size}-${file.lastModified}`),
-      );
-
-      const newItems = validFiles
-        .filter((file) => {
-          const key = `${file.name}-${file.size}-${file.lastModified}`;
-          if (existingKeys.has(key)) return false;
-          existingKeys.add(key);
-          return true;
-        })
-        .map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
-
-      if (!currentFiles.length && newItems.length) {
-        setActiveFileIndex(0);
-        resetPrintSettings();
-      }
-
-      return [...currentFiles, ...newItems];
-    });
-
-    if (inputRef.current) inputRef.current.value = '';
+    setError('');
+    setFile(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+    resetPrintSettings();
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
     setIsDragging(false);
-    addFiles(event.dataTransfer.files);
+    handleFile(event.dataTransfer.files?.[0]);
   };
 
-  const removeFile = (indexToRemove) => {
-    setFiles((currentFiles) => {
-      const item = currentFiles[indexToRemove];
-      if (item) URL.revokeObjectURL(item.previewUrl);
+  const removeFile = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
 
-      const nextFiles = currentFiles.filter((_, index) => index !== indexToRemove);
+    setFile(null);
+    setPreviewUrl('');
+    setError('');
+    setIsDragging(false);
+    resetPrintSettings();
 
-      if (!nextFiles.length) {
-        setActiveFileIndex(0);
-        resetPrintSettings();
-        return nextFiles;
-      }
-
-      setActiveFileIndex((currentIndex) => {
-        if (indexToRemove < currentIndex) return currentIndex - 1;
-        if (indexToRemove === currentIndex) {
-          return Math.min(currentIndex, nextFiles.length - 1);
-        }
-        return currentIndex;
-      });
-
-      return nextFiles;
-    });
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
   };
-
-  const activeItem = files[activeFileIndex];
-  const activeFile = activeItem?.file || null;
-  const activePreviewUrl = activeItem?.previewUrl || '';
 
   return (
     <div className="print-flow-page">
@@ -155,7 +103,7 @@ export default function PrintUpload() {
           <span>PrintStation</span>
         </div>
 
-        <div className="flow-step">Step 2 of 2</div>
+        <div className="flow-step">Step 2 of 4</div>
       </header>
 
       <main className="upload-step-main container">
@@ -165,22 +113,27 @@ export default function PrintUpload() {
             Printer connected
           </div>
 
-          <h1>Upload your documents</h1>
+          <h1>Upload your document</h1>
           <p>
-            Upload multiple PDF, JPG, or PNG files at once, then preview and configure your print settings.
+            Upload a PDF, JPG, or PNG, preview it, then choose pages, copies,
+            color, paper size, and orientation.
           </p>
         </div>
 
-        {!files.length ? (
+        {!file ? (
           <section
-            className={`document-upload-card ${isDragging ? 'is-dragging' : ''}`}
+            className={`document-upload-card ${
+              isDragging ? 'is-dragging' : ''
+            }`}
             onDragEnter={(event) => {
               event.preventDefault();
               setIsDragging(true);
             }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={(event) => {
-              if (event.currentTarget === event.target) setIsDragging(false);
+              if (event.currentTarget === event.target) {
+                setIsDragging(false);
+              }
             }}
             onDrop={handleDrop}
           >
@@ -188,18 +141,19 @@ export default function PrintUpload() {
               <FileUp size={34} />
             </div>
 
-            <h2>Drag &amp; drop your documents</h2>
-            <p>Select or drop multiple files to upload them together</p>
+            <h2>Drag &amp; drop your document</h2>
+            <p>Drag your file and drop it anywhere inside this area</p>
 
-            <div className="upload-divider"><span>or</span></div>
+            <div className="upload-divider">
+              <span>or</span>
+            </div>
 
             <input
               ref={inputRef}
               type="file"
               accept="application/pdf,image/jpeg,image/png"
-              multiple
               hidden
-              onChange={(event) => addFiles(event.target.files)}
+              onChange={(event) => handleFile(event.target.files?.[0])}
             />
 
             <button
@@ -208,112 +162,35 @@ export default function PrintUpload() {
               onClick={() => inputRef.current?.click()}
             >
               <FolderOpen size={19} />
-              Select Documents
+              Manual Upload
             </button>
 
             <span className="upload-format-note">
-              Supported formats: PDF, JPG, PNG • Multiple files supported
+              Supported formats: PDF, JPG, PNG
             </span>
 
             {error && <p className="upload-error">{error}</p>}
           </section>
         ) : (
-          <>
-            <section className="uploaded-files-panel" aria-label="Uploaded documents">
-              <div className="uploaded-files-header">
-                <div>
-                  <span className="uploaded-files-title">
-                    <FileText size={17} />
-                    Uploaded Documents
-                  </span>
-                  <small>
-                    {files.length} {files.length === 1 ? 'document' : 'documents'}
-                  </small>
-                </div>
-
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png"
-                  multiple
-                  hidden
-                  onChange={(event) => addFiles(event.target.files)}
-                />
-
-                <button
-                  type="button"
-                  className="add-files-button"
-                  onClick={() => inputRef.current?.click()}
-                >
-                  <Plus size={17} />
-                  Add Files
-                </button>
-              </div>
-
-              <div className="uploaded-files-list">
-                {files.map(({ file }, index) => (
-                  <div
-                    key={`${file.name}-${file.size}-${file.lastModified}`}
-                    className={`uploaded-file-item ${index === activeFileIndex ? 'is-active' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveFileIndex(index)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setActiveFileIndex(index);
-                      }
-                    }}
-                  >
-                    <span className="uploaded-file-icon" aria-hidden="true">
-                      <FileText size={18} />
-                    </span>
-                    <span className="uploaded-file-details">
-                      <strong title={file.name}>{file.name}</strong>
-                      <small>{formatFileSize(file.size)}</small>
-                    </span>
-                    <span className="uploaded-file-index">{index + 1}</span>
-                    <button
-                      type="button"
-                      className="uploaded-file-remove"
-                      aria-label={`Remove ${file.name}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeFile(index);
-                      }}
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {error && <p className="upload-error">{error}</p>}
-            </section>
-
-            <PrintSetting
-              file={activeFile}
-              previewUrl={activePreviewUrl}
-              files={files}
-              activeFileIndex={activeFileIndex}
-              onSelectFile={setActiveFileIndex}
-              pages={pages}
-              setPages={setPages}
-              customPages={customPages}
-              setCustomPages={setCustomPages}
-              copies={copies}
-              setCopies={setCopies}
-              previewPage={previewPage}
-              setPreviewPage={setPreviewPage}
-              colorMode={colorMode}
-              setColorMode={setColorMode}
-              paperSize={paperSize}
-              setPaperSize={setPaperSize}
-              orientation={orientation}
-              setOrientation={setOrientation}
-              onRemove={() => removeFile(activeFileIndex)}
-            />
-          </>
+          <PrintSetting
+            file={file}
+            previewUrl={previewUrl}
+            pages={pages}
+            setPages={setPages}
+            customPages={customPages}
+            setCustomPages={setCustomPages}
+            copies={copies}
+            setCopies={setCopies}
+            previewPage={previewPage}
+            setPreviewPage={setPreviewPage}
+            colorMode={colorMode}
+            setColorMode={setColorMode}
+            paperSize={paperSize}
+            setPaperSize={setPaperSize}
+            orientation={orientation}
+            setOrientation={setOrientation}
+            onRemove={removeFile}
+          />
         )}
 
         {printer && (

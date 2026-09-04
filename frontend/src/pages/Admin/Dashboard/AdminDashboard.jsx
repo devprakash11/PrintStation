@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import { printJobService } from '../../../services/printJobService.js';
 import { reportService } from '../../../services/reportService.js';
+import '../../../styles/adminDashboard.css';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },

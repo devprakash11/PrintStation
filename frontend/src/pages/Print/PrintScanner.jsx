@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, CheckCircle2, FileUp, LoaderCircle, QrCode, ShieldCheck } from 'lucide-react';
+import '../../styles/allPage.css';
 
 const QR_SCANNER_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 
