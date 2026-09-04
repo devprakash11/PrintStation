@@ -33,10 +33,10 @@ const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
   { label: 'Printers', icon: Printer, path: '/admin/printers' },
   { label: 'QR Codes', icon: QrCode, path: '/admin/qr-codes' },
-  { label: 'Print Jobs', icon: FileText },
-  { label: 'Users', icon: Users },
-  { label: 'Reports', icon: BarChart3 },
-  { label: 'Settings', icon: Settings },
+  { label: 'Print Jobs', icon: FileText, path: '/admin/print-jobs' },
+  { label: 'Users', icon: Users, path: '/admin/users' },
+  { label: 'Reports', icon: BarChart3, path: '/admin/reports' },
+  { label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
 const PRINTERS = [
@@ -469,7 +469,7 @@ export default function QrCodeManagement() {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-nav-item" type="button"><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
+          <button className="admin-nav-item" type="button" onClick={() => handleNavigation({ label: 'Help Center', path: '/admin/help' })}><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
           <button className="admin-nav-item" type="button" onClick={handleLogout}><LogOut size={20} strokeWidth={1.9} /><span>Logout</span></button>
         </div>
       </aside>

@@ -118,7 +118,7 @@ export default function Settings() {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-nav-item" type="button"><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
+          <button className="admin-nav-item" type="button" onClick={() => handleNavigation({ label: 'Help Center', path: '/admin/help' })}><CircleHelp size={20} strokeWidth={1.9} /><span>Help Center</span></button>
           <button className="admin-nav-item" type="button" onClick={handleLogout}><LogOut size={20} strokeWidth={1.9} /><span>Logout</span></button>
         </div>
       </aside>
