@@ -1,0 +1,598 @@
+/* =========================================================
+   PRINTSTATION — QR CODE MANAGEMENT
+   Brand-aligned admin QR code workspace
+   ========================================================= */
+
+/* =========================================================
+   01. PAGE LAYOUT
+   ========================================================= */
+
+.qr-management-content {
+  padding-top: 4px;
+}
+
+.qr-page-topbar {
+  align-items: center;
+}
+
+/* =========================================================
+   02. TOOLBAR
+   ========================================================= */
+
+.qr-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.qr-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  box-shadow: var(--admin-shadow-xs);
+  transition: border-color var(--admin-transition), box-shadow var(--admin-transition);
+}
+
+.qr-search:focus-within {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-soft);
+}
+
+.qr-search input {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--admin-ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.qr-search input::placeholder {
+  color: var(--admin-muted-light);
+}
+
+.qr-search button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--admin-muted);
+  cursor: pointer;
+}
+
+.qr-search button:hover {
+  background: var(--admin-neutral-soft);
+  color: var(--admin-ink);
+}
+
+.qr-filter-button,
+.qr-generate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--admin-radius-md);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--admin-transition), background var(--admin-transition), border-color var(--admin-transition), box-shadow var(--admin-transition), color var(--admin-transition);
+}
+
+.qr-filter-button {
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-ink-soft);
+}
+
+.qr-filter-button:hover,
+.qr-filter-button.is-filtered {
+  border-color: var(--admin-accent-muted);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.qr-filter-button span {
+  padding-left: 4px;
+  color: var(--admin-accent);
+}
+
+.qr-generate-button {
+  border: 1px solid var(--admin-accent);
+  background: var(--admin-accent);
+  color: #fff;
+  box-shadow: var(--admin-shadow-accent);
+}
+
+.qr-generate-button:hover {
+  background: var(--admin-accent-dark);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   03. SUMMARY
+   ========================================================= */
+
+.qr-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.qr-summary-row > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--admin-accent-dark);
+}
+
+.qr-summary-row strong {
+  color: var(--admin-ink);
+}
+
+/* =========================================================
+   04. QR CARD GRID
+   ========================================================= */
+
+.qr-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.qr-printer-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-xs);
+  transition: transform var(--admin-transition), box-shadow var(--admin-transition), border-color var(--admin-transition);
+}
+
+.qr-printer-card:hover {
+  border-color: var(--admin-line-strong);
+  box-shadow: var(--admin-shadow-sm);
+  transform: translateY(-2px);
+}
+
+.qr-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 16px 13px;
+}
+
+.qr-printer-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.qr-printer-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.qr-printer-heading h2 {
+  margin: 1px 0 4px;
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-printer-heading span {
+  display: block;
+  overflow: hidden;
+  color: var(--admin-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.qr-status-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.qr-status-badge.is-success {
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+}
+
+.qr-status-badge.is-warning {
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+}
+
+.qr-status-badge.is-danger {
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+}
+
+/* =========================================================
+   05. QR PREVIEW
+   ========================================================= */
+
+.qr-preview-area {
+  display: grid;
+  place-items: center;
+  min-height: 215px;
+  margin: 0 12px;
+  padding: 22px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-paper);
+}
+
+.qr-preview-frame {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid #ece9e5;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(23, 23, 23, 0.06);
+}
+
+.qr-code-visual {
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+.qr-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--admin-line);
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+
+.qr-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 5px;
+}
+
+.qr-card-meta span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-card-meta span:last-child {
+  color: var(--admin-success);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   06. CARD ACTIONS
+   ========================================================= */
+
+.qr-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 16px 16px;
+}
+
+.qr-view-button,
+.qr-download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background var(--admin-transition), color var(--admin-transition), border-color var(--admin-transition), transform var(--admin-transition);
+}
+
+.qr-view-button {
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-ink-soft);
+}
+
+.qr-view-button:hover {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.qr-download-button {
+  border: 1px solid var(--admin-accent);
+  background: var(--admin-accent);
+  color: #fff;
+}
+
+.qr-download-button:hover {
+  background: var(--admin-accent-dark);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   07. EMPTY STATE
+   ========================================================= */
+
+.qr-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 300px;
+  padding: 40px;
+  border: 1px dashed var(--admin-line-strong);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.qr-empty-state svg {
+  color: var(--admin-accent);
+}
+
+.qr-empty-state h2,
+.qr-empty-state p {
+  margin: 0;
+}
+
+.qr-empty-state h2 {
+  color: var(--admin-ink);
+  font-size: 18px;
+}
+
+.qr-empty-state p {
+  font-size: 13px;
+}
+
+/* =========================================================
+   08. QR MODAL
+   ========================================================= */
+
+.qr-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 23, 23, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.qr-modal {
+  position: relative;
+  width: min(100%, 430px);
+  padding: 28px;
+  border: 1px solid var(--admin-line);
+  border-radius: 18px;
+  background: var(--admin-surface);
+  box-shadow: 0 24px 70px rgba(23, 23, 23, 0.2);
+  text-align: center;
+}
+
+.qr-modal-close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  cursor: pointer;
+}
+
+.qr-modal-close:hover {
+  color: var(--admin-ink);
+  background: var(--admin-paper);
+}
+
+.qr-modal-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 12px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent);
+}
+
+.qr-modal-eyebrow {
+  color: var(--admin-accent-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qr-modal h2 {
+  margin: 7px 0 4px;
+  color: var(--admin-ink);
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.qr-modal p {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.qr-modal-code {
+  display: grid;
+  width: fit-content;
+  margin: 20px auto;
+  padding: 16px;
+  border: 1px solid var(--admin-line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.qr-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+/* =========================================================
+   09. RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .qr-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
+   10. RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .qr-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .qr-search {
+    grid-column: 1 / -1;
+  }
+
+  .qr-filter-button,
+  .qr-generate-button {
+    width: 100%;
+  }
+
+  .qr-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-summary-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .qr-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-search {
+    grid-column: auto;
+  }
+
+  .qr-preview-area {
+    min-height: 190px;
+  }
+
+  .qr-modal-backdrop {
+    padding: 14px;
+  }
+
+  .qr-modal {
+    padding: 24px 18px 18px;
+  }
+
+  .qr-modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   11. PRINT
+   ========================================================= */
+
+@media print {
+  .admin-sidebar,
+  .admin-topbar,
+  .qr-toolbar,
+  .qr-summary-row,
+  .qr-card-actions,
+  .qr-modal-backdrop {
+    display: none !important;
+  }
+
+  .admin-main {
+    width: 100%;
+    margin: 0;
+  }
+
+  .qr-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   12. ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-printer-card,
+  .qr-search,
+  .qr-filter-button,
+  .qr-generate-button,
+  .qr-view-button,
+  .qr-download-button {
+    transition: none;
+  }
+}
