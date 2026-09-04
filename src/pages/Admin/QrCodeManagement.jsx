@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   CalendarDays,
@@ -23,9 +23,11 @@ import {
 } from 'lucide-react';
 import '../../styles/adminDashboard.css';
 import '../../styles/qrCodeManagement.css';
+import '../../styles/qrCodeGenerateModal.css';
 
 const SESSION_KEY = 'printstation_admin_session';
 const DELETED_QR_KEY = 'printstation_deleted_qr_codes';
+const GENERATED_QR_KEY = 'printstation_generated_qr_printers';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
@@ -38,15 +40,22 @@ const NAV_ITEMS = [
 ];
 
 const PRINTERS = [
-  { id: 'PRN-001', name: 'HP LaserJet Pro M404dn', model: 'M404dn', location: 'Computer Lab 1', status: 'Online' },
-  { id: 'PRN-002', name: 'Canon imageCLASS', model: 'MF445dw', location: 'Library Ground Floor', status: 'Printing' },
-  { id: 'PRN-003', name: 'Epson EcoTank', model: 'ET-4760', location: 'Staff Room B', status: 'Offline' },
-  { id: 'PRN-004', name: 'Brother HL', model: 'L2390DW', location: 'Reception', status: 'Online' },
-  { id: 'PRN-005', name: 'HP Color LaserJet', model: 'M255dw', location: 'Design Lab', status: 'Online' },
-  { id: 'PRN-006', name: 'Canon PIXMA', model: 'G6020', location: 'Admin Office', status: 'Online' },
-  { id: 'PRN-007', name: 'Epson WorkForce', model: 'WF-4830', location: 'Accounts', status: 'Offline' },
-  { id: 'PRN-008', name: 'Brother MFC', model: 'MFC-L2710DW', location: 'Staff Room A', status: 'Online' },
+  { id: 'PRN-001', name: 'HP LaserJet Pro M404dn', model: 'M404dn', location: 'Computer Lab 1', status: 'Online', connection: 'Wi-Fi' },
+  { id: 'PRN-002', name: 'Canon imageCLASS', model: 'MF445dw', location: 'Library Ground Floor', status: 'Printing', connection: 'Ethernet' },
+  { id: 'PRN-003', name: 'Epson EcoTank', model: 'ET-4760', location: 'Staff Room B', status: 'Offline', connection: 'Wi-Fi' },
+  { id: 'PRN-004', name: 'Brother HL', model: 'L2390DW', location: 'Reception', status: 'Online', connection: 'USB' },
+  { id: 'PRN-005', name: 'HP Color LaserJet', model: 'M255dw', location: 'Design Lab', status: 'Online', connection: 'Wi-Fi' },
+  { id: 'PRN-006', name: 'Canon PIXMA', model: 'G6020', location: 'Admin Office', status: 'Online', connection: 'Wi-Fi' },
+  { id: 'PRN-007', name: 'Epson WorkForce', model: 'WF-4830', location: 'Accounts', status: 'Offline', connection: 'Ethernet' },
+  { id: 'PRN-008', name: 'Brother MFC', model: 'MFC-L2710DW', location: 'Staff Room A', status: 'Online', connection: 'USB' },
 ];
+
+const INITIAL_GENERATE_FORM = {
+  name: '',
+  model: '',
+  location: '',
+  connection: 'Wi-Fi',
+};
 
 function getSession() {
   try {
@@ -65,9 +74,21 @@ function getDeletedQrIds() {
   }
 }
 
+function getGeneratedPrinters() {
+  try {
+    const value = JSON.parse(localStorage.getItem(GENERATED_QR_KEY) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
 function getInitialPrinters() {
   const deletedIds = new Set(getDeletedQrIds());
-  return PRINTERS.filter((printer) => !deletedIds.has(printer.id));
+  const generatedPrinters = getGeneratedPrinters();
+  const allPrinters = [...PRINTERS, ...generatedPrinters];
+
+  return allPrinters.filter((printer) => !deletedIds.has(printer.id));
 }
 
 function hashText(value) {
@@ -93,7 +114,8 @@ function buildQrMatrix(value) {
         reserved[targetRow][targetCol] = true;
         matrix[targetRow][targetCol] =
           row >= 0 && row <= 6 &&
-          col >= 0 && col <= 6 &&
+          col >= 0 &&
+          col <= 6 &&
           (row === 0 || row === 6 || col === 0 || col === 6 ||
             (row >= 2 && row <= 4 && col >= 2 && col <= 4));
       }
@@ -260,6 +282,16 @@ function downloadQrLabel(printer) {
   }, 'image/png');
 }
 
+function getNextPrinterId(printers) {
+  const highestId = printers.reduce((highest, printer) => {
+    const match = printer.id.match(/PRN-(\d+)/i);
+    const numericId = match ? Number(match[1]) : 0;
+    return Math.max(highest, numericId);
+  }, 0);
+
+  return `PRN-${String(highestId + 1).padStart(3, '0')}`;
+}
+
 export default function QrCodeManagement() {
   const [session] = useState(getSession);
   const [printers, setPrinters] = useState(getInitialPrinters);
@@ -268,8 +300,28 @@ export default function QrCodeManagement() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [selectedPrinter, setSelectedPrinter] = useState(null);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateForm, setGenerateForm] = useState(INITIAL_GENERATE_FORM);
+  const [generateError, setGenerateError] = useState('');
 
   const displayName = useMemo(() => session?.name?.trim() || 'Admin', [session]);
+
+  useEffect(() => {
+    if (!showGenerateModal) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setShowGenerateModal(false);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showGenerateModal]);
 
   const filteredPrinters = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -323,6 +375,61 @@ export default function QrCodeManagement() {
           : 'All';
 
     setFilter(next);
+  };
+
+  const handleGenerateFieldChange = (event) => {
+    const { name, value } = event.target;
+    setGenerateForm((current) => ({ ...current, [name]: value }));
+    setGenerateError('');
+  };
+
+  const handleOpenGenerateModal = () => {
+    setGenerateForm(INITIAL_GENERATE_FORM);
+    setGenerateError('');
+    setShowGenerateModal(true);
+  };
+
+  const handleGenerateQrCode = (event) => {
+    event.preventDefault();
+
+    const name = generateForm.name.trim();
+    const model = generateForm.model.trim();
+    const location = generateForm.location.trim();
+
+    if (!name || !model || !location) {
+      setGenerateError('Please complete all fields before generating the QR code.');
+      return;
+    }
+
+    const duplicate = printers.some(
+      (printer) => printer.name.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (duplicate) {
+      setGenerateError('A printer with this name already exists. Please use a different name.');
+      return;
+    }
+
+    const newPrinter = {
+      id: getNextPrinterId(printers),
+      name,
+      model,
+      location,
+      connection: generateForm.connection,
+      status: 'Online',
+    };
+
+    const generatedPrinters = getGeneratedPrinters();
+    localStorage.setItem(
+      GENERATED_QR_KEY,
+      JSON.stringify([...generatedPrinters, newPrinter]),
+    );
+
+    setPrinters((currentPrinters) => [...currentPrinters, newPrinter]);
+    setShowGenerateModal(false);
+    setGenerateForm(INITIAL_GENERATE_FORM);
+    setGenerateError('');
+    setSelectedPrinter(newPrinter);
   };
 
   if (!session) {
@@ -402,7 +509,7 @@ export default function QrCodeManagement() {
               Filter
               {filter !== 'All' && <span>{filter}</span>}
             </button>
-            <button className="qr-generate-button" type="button" onClick={() => printers[0] && setSelectedPrinter(printers[0])} disabled={!printers.length}>
+            <button className="qr-generate-button" type="button" onClick={handleOpenGenerateModal}>
               <Plus size={18} />
               Generate QR Code
             </button>
@@ -452,6 +559,120 @@ export default function QrCodeManagement() {
           )}
         </section>
       </main>
+
+      {showGenerateModal && (
+        <div
+          className="qr-generate-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowGenerateModal(false);
+          }}
+        >
+          <section
+            className="qr-generate-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qr-generate-modal-title"
+          >
+            <button
+              className="qr-generate-modal-close"
+              type="button"
+              onClick={() => setShowGenerateModal(false)}
+              aria-label="Close generate QR code form"
+            >
+              <X size={20} />
+            </button>
+
+            <header className="qr-generate-modal-header">
+              <div className="qr-generate-modal-icon" aria-hidden="true">
+                <Printer size={24} />
+              </div>
+              <div className="qr-generate-modal-heading">
+                <h2 id="qr-generate-modal-title">Generate QR Code</h2>
+                <p>Register a printer and create its PrintStation QR code.</p>
+              </div>
+            </header>
+
+            <form className="qr-generate-form" onSubmit={handleGenerateQrCode} noValidate>
+              <div className="qr-generate-field">
+                <label htmlFor="qr-printer-name">Printer Name</label>
+                <input
+                  id="qr-printer-name"
+                  className="qr-generate-input"
+                  name="name"
+                  type="text"
+                  value={generateForm.name}
+                  onChange={handleGenerateFieldChange}
+                  placeholder="e.g. HP LaserJet Pro"
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
+
+              <div className="qr-generate-field">
+                <label htmlFor="qr-printer-model">Model</label>
+                <input
+                  id="qr-printer-model"
+                  className="qr-generate-input"
+                  name="model"
+                  type="text"
+                  value={generateForm.model}
+                  onChange={handleGenerateFieldChange}
+                  placeholder="e.g. M404dn"
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="qr-generate-field">
+                <label htmlFor="qr-printer-location">Location</label>
+                <input
+                  id="qr-printer-location"
+                  className="qr-generate-input"
+                  name="location"
+                  type="text"
+                  value={generateForm.location}
+                  onChange={handleGenerateFieldChange}
+                  placeholder="e.g. Computer Lab 1"
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="qr-generate-field">
+                <label htmlFor="qr-printer-connection">Connection</label>
+                <select
+                  id="qr-printer-connection"
+                  className="qr-generate-select"
+                  name="connection"
+                  value={generateForm.connection}
+                  onChange={handleGenerateFieldChange}
+                >
+                  <option value="Wi-Fi">Wi-Fi</option>
+                  <option value="Ethernet">Ethernet</option>
+                  <option value="USB">USB</option>
+                </select>
+              </div>
+
+              {generateError && (
+                <p className="qr-generate-field-error" role="alert">{generateError}</p>
+              )}
+
+              <div className="qr-generate-form-actions">
+                <button
+                  className="qr-generate-cancel"
+                  type="button"
+                  onClick={() => setShowGenerateModal(false)}
+                >
+                  Cancel
+                </button>
+                <button className="qr-generate-submit" type="submit">
+                  <QrCode size={17} />
+                  Generate QR
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {selectedPrinter && (
         <div className="qr-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setSelectedPrinter(null)}>
