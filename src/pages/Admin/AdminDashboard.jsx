@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
   { label: 'Printers', icon: Printer, path: '/admin/printers' },
   { label: 'QR Codes', icon: QrCode, path: '/admin/qr-codes' },
-  { label: 'Print Jobs', icon: FileText },
+  { label: 'Print Jobs', icon: FileText, path: '/admin/print-jobs' },
   { label: 'Users', icon: Users },
   { label: 'Reports', icon: BarChart3 },
   { label: 'Settings', icon: Settings },
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           </div>
 
           <section className="admin-activity-card">
-            <div className="admin-section-header"><div><h2>Recent Activity</h2><span>Latest printer and print-job activity</span></div><button type="button" onClick={() => handleNavigation({ label: 'Print Jobs' })}>View All <ChevronRight size={17} /></button></div>
+            <div className="admin-section-header"><div><h2>Recent Activity</h2><span>Latest printer and print-job activity</span></div><button type="button" onClick={() => handleNavigation({ label: 'Print Jobs', path: '/admin/print-jobs' })}>View All <ChevronRight size={17} /></button></div>
             <div className="admin-activity-table-wrap">
               <table className="admin-activity-table">
                 <thead><tr><th>Status</th><th>Printer ID</th><th>Document Name</th><th>Time</th><th aria-label="Action" /></tr></thead>
