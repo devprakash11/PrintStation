@@ -2,72 +2,43 @@ import { request, SESSION_KEY, TOKEN_KEY } from './api.js';
 
 export const authService = {
   async signup({ name, email, password }) {
-    const res = await request('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password }),
-    });
-    if (res?.data?.token) {
-      authService.saveSession(res.data.user, res.data.token);
-    }
+    const res = await request('/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+    if (res?.data?.token) authService.saveSession(res.data.user, res.data.token);
     return res;
   },
 
   async login({ email, password }) {
-    const res = await request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    if (res?.data?.token) {
-      authService.saveSession(res.data.user, res.data.token);
-    }
+    const res = await request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    if (res?.data?.token) authService.saveSession(res.data.user, res.data.token);
     return res;
   },
 
-  async getMe() {
-    return request('/auth/me');
+  async forgotPassword(email) {
+    return request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
   },
 
+  async resetPassword({ token, password }) {
+    return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) });
+  },
+
+  async getMe() { return request('/auth/me'); },
+
   async logout() {
-    try {
-      await request('/auth/logout', { method: 'POST' });
-    } catch {
-      // Continue cleanup on failure
-    }
+    try { await request('/auth/logout', { method: 'POST' }); } catch { /* cleanup locally */ }
     authService.clearSession();
   },
 
   saveSession(user, token) {
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    if (user) {
-      localStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          token,
-        }),
-      );
-    }
+    if (user) localStorage.setItem(SESSION_KEY, JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, token }));
   },
 
   getSession() {
-    try {
-      return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
   },
 
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-  },
-
-  clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-  },
+  getToken() { return localStorage.getItem(TOKEN_KEY); },
+  clearSession() { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(TOKEN_KEY); },
 };
 
 export default authService;
