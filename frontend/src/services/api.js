@@ -2,6 +2,25 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const SESSION_KEY = 'printstation_admin_session';
 export const TOKEN_KEY = 'printstation_admin_token';
 export const AUTH_UNAUTHORIZED_EVENT = 'printstation:auth-unauthorized';
+export const LOADING_EVENT = 'printstation:loading';
+
+let activeRequests = 0;
+
+function setLoading(active) {
+  if (typeof window === 'undefined') return;
+
+  if (active) {
+    activeRequests += 1;
+  } else {
+    activeRequests = Math.max(0, activeRequests - 1);
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(LOADING_EVENT, {
+      detail: { active: activeRequests > 0 },
+    }),
+  );
+}
 
 export async function request(endpoint, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -16,31 +35,37 @@ export async function request(endpoint, options = {}) {
   }
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-  const response = await fetch(url, { ...options, headers });
+  setLoading(true);
 
-  let data;
   try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
+    const response = await fetch(url, { ...options, headers });
 
-  if (!response.ok) {
-    if (response.status === 401 && token) {
-      window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
     }
 
-    const message =
-      data?.message ||
-      (Array.isArray(data?.errors) ? data.errors.map((error) => error.message || error).join(', ') : null) ||
-      `Request failed (${response.status})`;
-    const error = new Error(message);
-    error.status = response.status;
-    error.data = data;
-    throw error;
-  }
+    if (!response.ok) {
+      if (response.status === 401 && token) {
+        window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+      }
 
-  return data;
+      const message =
+        data?.message ||
+        (Array.isArray(data?.errors) ? data.errors.map((error) => error.message || error).join(', ') : null) ||
+        `Request failed (${response.status})`;
+      const error = new Error(message);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } finally {
+    setLoading(false);
+  }
 }
 
 export default {
@@ -49,4 +74,5 @@ export default {
   SESSION_KEY,
   TOKEN_KEY,
   AUTH_UNAUTHORIZED_EVENT,
+  LOADING_EVENT,
 };
