@@ -1,17 +1,18 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { supabase } from '../config/supabase.js';
+import { query, pool } from '../db/pool.js';
 
-const email = process.env.ADMIN_EMAIL;
+const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 const password = process.env.ADMIN_PASSWORD;
+const name = process.env.ADMIN_NAME?.trim() || 'PrintStation Admin';
 
 if (!email || !password) {
   console.error('ADMIN_EMAIL and ADMIN_PASSWORD are required.');
   process.exit(1);
 }
 
-if (password.length < 8) {
-  console.error('ADMIN_PASSWORD must contain at least 8 characters.');
+if (password.length < 8 || password.length > 72) {
+  console.error('ADMIN_PASSWORD must contain between 8 and 72 characters.');
   process.exit(1);
 }
 
@@ -19,49 +20,38 @@ async function seedAdmin() {
   try {
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const { data: existingUser, error: findError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .maybeSingle();
+    const existing = await query(
+      'SELECT id FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1',
+      [email],
+    );
 
-    if (findError) {
-      throw findError;
-    }
+    if (existing.rowCount) {
+      await query(
+        `UPDATE users
+         SET password_hash=$1,
+             role='admin',
+             status='active',
+             updated_at=NOW()
+         WHERE id=$2`,
+        [passwordHash, existing.rows[0].id],
+      );
 
-    if (existingUser) {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          password_hash: passwordHash,
-          role: 'admin',
-          status: 'active',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingUser.id);
-
-      if (error) throw error;
-
-      console.log(`Admin password updated for ${email}`);
+      console.log(`Admin account updated for ${email}`);
       return;
     }
 
-    const { error } = await supabase
-      .from('users')
-      .insert({
-        name: 'PrintStation Admin',
-        email: email.toLowerCase(),
-        password_hash: passwordHash,
-        role: 'admin',
-        status: 'active',
-      });
-
-    if (error) throw error;
+    await query(
+      `INSERT INTO users (name,email,password_hash,role,status)
+       VALUES ($1,$2,$3,'admin','active')`,
+      [name, email, passwordHash],
+    );
 
     console.log(`Admin account created for ${email}`);
   } catch (error) {
     console.error('Admin seed failed:', error.message);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    await pool.end();
   }
 }
 
