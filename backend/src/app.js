@@ -33,6 +33,24 @@ app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/uploads', uploadsRoutes);
 
+app.get(['/', '/api'], (req, res) => {
+  res.json({
+    success: true,
+    message: 'PrintStation API is running on Vercel',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/v1/health',
+      auth: '/api/v1/auth',
+      printers: '/api/v1/printers',
+      printJobs: '/api/v1/print-jobs',
+      qrCodes: '/api/v1/qr-codes',
+      reports: '/api/v1/reports',
+      settings: '/api/v1/settings',
+      uploads: '/api/v1/uploads'
+    }
+  });
+});
+
 app.get('/api/v1/health', async (req, res, next) => {
   try {
     await query('SELECT 1');

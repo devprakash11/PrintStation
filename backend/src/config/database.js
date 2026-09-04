@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { env } from '../config/env.js';
+import { env } from './env.js';
 
 const { Pool } = pg;
 
@@ -21,3 +21,8 @@ pool.on('error', (error) => console.error('Unexpected PostgreSQL pool error:', e
 export async function query(text, params = []) {
   return pool.query(text, params);
 }
+
+export default {
+  pool,
+  query,
+};

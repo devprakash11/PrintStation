@@ -1,0 +1,1419 @@
+/* =========================================================
+   PRINTSTATION — GLOBAL STYLES
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   01. Fonts
+   --------------------------------------------------------- */
+
+@import url(
+  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap'
+);
+
+
+/* ---------------------------------------------------------
+   02. Design Tokens
+   --------------------------------------------------------- */
+
+:root {
+  /* Colors */
+  --color-ink: #171717;
+  --color-ink-soft: #525252;
+  --color-muted: #737373;
+
+  --color-paper: #fafaf9;
+  --color-surface: #ffffff;
+  --color-line: #e7e5e4;
+
+  --color-accent: #e85d2a;
+  --color-accent-dark: #c94a1d;
+  --color-accent-soft: #fff1eb;
+
+  --color-success: #198754;
+  --color-danger: #c43d3d;
+
+  /* Typography */
+  --font-body: 'DM Sans', sans-serif;
+  --font-heading: 'Manrope', sans-serif;
+
+  /* Layout */
+  --container-width: 1200px;
+  --page-padding-desktop: 24px;
+  --page-padding-mobile: 16px;
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  /* Shadows */
+  --shadow-soft: 0 16px 50px rgba(23, 23, 23, 0.08);
+  --shadow-button: 0 3px 14px rgba(23, 23, 23, 0.04);
+  --shadow-button-hover: 0 7px 20px rgba(23, 23, 23, 0.08);
+
+  /* Motion */
+  --transition-fast: 0.2s ease;
+  --transition-default: 0.25s ease;
+}
+
+
+/* ---------------------------------------------------------
+   03. Reset & Base
+   --------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+
+  background: var(--color-paper);
+  color: var(--color-ink);
+
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+}
+
+
+/* ---------------------------------------------------------
+   04. Layout Utilities
+   --------------------------------------------------------- */
+
+.container {
+  width: min(
+    var(--container-width),
+    calc(100% - (var(--page-padding-desktop) * 2))
+  );
+
+  margin-inline: auto;
+}
+
+
+/* ---------------------------------------------------------
+   05. Shared Buttons
+   --------------------------------------------------------- */
+
+.primary-button,
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border-radius: 12px;
+
+  font-weight: 700;
+
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.primary-button:focus-visible,
+.admin-button:focus-visible,
+.brand-logo:focus-visible {
+  outline: 3px solid rgba(232, 93, 42, 0.28);
+  outline-offset: 4px;
+}
+
+.primary-button:hover,
+.admin-button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* ---------------------------------------------------------
+   06. Brand
+   --------------------------------------------------------- */
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.brand-mark {
+  display: grid;
+
+  width: 38px;
+  height: 38px;
+
+  place-items: center;
+
+  color: var(--color-accent);
+}
+
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-name {
+  font-size: 19px;
+  line-height: 1;
+}
+
+
+/* ---------------------------------------------------------
+   07. Main Navigation
+   --------------------------------------------------------- */
+
+.site-header {
+  position: relative;
+  z-index: 10;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 84px;
+}
+
+.admin-button {
+  min-height: 42px;
+  padding-inline: 16px;
+
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+
+  font-size: 14px;
+
+  box-shadow: var(--shadow-button);
+}
+
+.admin-button:hover {
+  border-color: #d6d3d1;
+  box-shadow: var(--shadow-button-hover);
+}
+
+
+/* ---------------------------------------------------------
+   08. Footer
+   --------------------------------------------------------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-line);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  min-height: 88px;
+}
+
+.footer-inner .brand-logo {
+  transform: scale(0.92);
+  transform-origin: left center;
+}
+
+.footer-inner p {
+  margin: 0;
+
+  color: var(--color-muted);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   PRINT FLOW
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   09. Print Flow Base
+   --------------------------------------------------------- */
+
+.print-flow-page {
+  min-height: 100svh;
+
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+
+/* ---------------------------------------------------------
+   10. Print Flow Header
+   --------------------------------------------------------- */
+
+.print-flow-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+
+  width: min(
+    var(--container-width),
+    calc(100% - (var(--page-padding-desktop) * 2))
+  );
+
+  min-height: 76px;
+  margin: 0 auto;
+
+  border-bottom: 1px solid var(--color-line);
+}
+
+.flow-back-link,
+.flow-brand,
+.flow-step {
+  display: inline-flex;
+  align-items: center;
+}
+
+.flow-back-link {
+  width: fit-content;
+
+  gap: 7px;
+
+  color: var(--color-ink-soft);
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.flow-back-link:hover {
+  color: var(--color-accent);
+}
+
+.flow-brand {
+  gap: 8px;
+
+  color: var(--color-accent);
+
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.flow-step {
+  justify-self: end;
+
+  color: var(--color-muted);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+/* ---------------------------------------------------------
+   11. Print Flow Content
+   --------------------------------------------------------- */
+
+.scanner-main,
+.upload-step-main {
+  padding-block: 54px 70px;
+}
+
+.scanner-heading {
+  max-width: 700px;
+
+  margin: 0 auto 34px;
+
+  text-align: center;
+}
+
+.flow-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 14px;
+
+  color: var(--color-accent-dark);
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.flow-eyebrow > span {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: var(--color-accent);
+
+  box-shadow: 0 0 0 5px var(--color-accent-soft);
+}
+
+.scanner-heading h1 {
+  margin-bottom: 13px;
+
+  font-family: var(--font-heading);
+  font-size: clamp(34px, 4.5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+}
+
+.scanner-heading p {
+  max-width: 600px;
+
+  margin: 0 auto;
+
+  color: var(--color-ink-soft);
+
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   SCANNER
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   12. Scanner Layout
+   --------------------------------------------------------- */
+
+.scanner-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr);
+  gap: 24px;
+
+  max-width: 1000px;
+
+  margin: 0 auto;
+}
+
+
+/* ---------------------------------------------------------
+   13. Shared Scanner Cards
+   --------------------------------------------------------- */
+
+.scanner-card,
+.scanner-info,
+.printer-detected,
+.upload-placeholder-card,
+.document-upload-card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-surface);
+
+  box-shadow: var(--shadow-soft);
+}
+
+
+/* ---------------------------------------------------------
+   14. Scanner Card
+   --------------------------------------------------------- */
+
+.scanner-card {
+  padding: 14px;
+}
+
+.scanner-viewport {
+  position: relative;
+
+  min-height: 470px;
+
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background: #181818;
+
+  isolation: isolate;
+}
+
+.scanner-reader {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  width: 100%;
+  height: 100%;
+}
+
+.scanner-reader video {
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+}
+
+.scanner-reader > div {
+  border: 0 !important;
+}
+
+.scanner-reader img {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   15. Scanner Overlay
+   --------------------------------------------------------- */
+
+.scanner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  display: grid;
+  place-items: center;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at center,
+      transparent 0 30%,
+      rgba(0, 0, 0, 0.35) 31% 100%
+    );
+}
+
+.scanner-overlay::before {
+  content: '';
+
+  width: min(68%, 310px);
+
+  aspect-ratio: 1;
+
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 22px;
+
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.18);
+}
+
+
+/* ---------------------------------------------------------
+   16. Scanner Frame
+   --------------------------------------------------------- */
+
+.scan-corner {
+  position: absolute;
+  z-index: 2;
+
+  width: 34px;
+  height: 34px;
+
+  border-style: solid;
+  border-color: var(--color-accent);
+}
+
+.scan-corner.top-left {
+  border-width: 4px 0 0 4px;
+  transform: translate(-119px, -119px);
+}
+
+.scan-corner.top-right {
+  border-width: 4px 4px 0 0;
+  transform: translate(119px, -119px);
+}
+
+.scan-corner.bottom-left {
+  border-width: 0 0 4px 4px;
+  transform: translate(-119px, 119px);
+}
+
+.scan-corner.bottom-right {
+  border-width: 0 4px 4px 0;
+  transform: translate(119px, 119px);
+}
+
+
+/* ---------------------------------------------------------
+   17. Scanner Animation
+   --------------------------------------------------------- */
+
+.scan-line {
+  position: absolute;
+
+  width: min(58%, 270px);
+  height: 2px;
+
+  background: var(--color-accent);
+
+  box-shadow: 0 0 12px rgba(232, 93, 42, 0.75);
+
+  animation: scanner-line 2.1s ease-in-out infinite;
+}
+
+@keyframes scanner-line {
+  0%,
+  100% {
+    transform: translateY(-120px);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translateY(120px);
+    opacity: 1;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   18. Scanner States
+   --------------------------------------------------------- */
+
+.scanner-state,
+.scanner-success {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 24px;
+
+  color: white;
+
+  text-align: center;
+
+  background: rgba(18, 18, 18, 0.72);
+}
+
+.scanner-state span {
+  max-width: 410px;
+
+  color: rgba(255, 255, 255, 0.76);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.scanner-success svg {
+  color: #67d391;
+}
+
+.scanner-success strong {
+  font-size: 18px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   19. Scanner Controls
+   --------------------------------------------------------- */
+
+.secondary-button {
+  min-height: 44px;
+  padding: 0 17px;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+
+  font-weight: 700;
+}
+
+.scanner-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 14px 4px 2px;
+
+  color: var(--color-muted);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scanner-status-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: var(--color-muted);
+}
+
+.scanner-status-dot.is-live {
+  background: var(--color-accent);
+
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+
+/* ---------------------------------------------------------
+   20. Scanner Information
+   --------------------------------------------------------- */
+
+.scanner-info {
+  padding: 28px;
+}
+
+.info-icon {
+  display: grid;
+
+  width: 46px;
+  height: 46px;
+
+  place-items: center;
+
+  margin-bottom: 20px;
+
+  border-radius: 13px;
+
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.scanner-info h2 {
+  margin-bottom: 22px;
+
+  font-family: var(--font-heading);
+  font-size: 22px;
+}
+
+.scanner-info ol {
+  display: grid;
+  gap: 21px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.scanner-info li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 11px;
+}
+
+.scanner-info li > span {
+  display: grid;
+
+  width: 28px;
+  height: 28px;
+
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: var(--color-ink);
+  color: white;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.scanner-info strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 14px;
+}
+
+.scanner-info p {
+  margin: 0;
+
+  color: var(--color-muted);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.secure-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  margin-top: 26px;
+  padding-top: 19px;
+
+  border-top: 1px solid var(--color-line);
+
+  color: var(--color-muted);
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.secure-note svg {
+  flex: 0 0 auto;
+
+  color: var(--color-success);
+}
+
+
+/* ---------------------------------------------------------
+   21. Printer Status
+   --------------------------------------------------------- */
+
+.printer-detected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  max-width: 1000px;
+
+  margin: 18px auto 0;
+  padding: 14px 16px;
+}
+
+.printer-detected > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.printer-detected > div > svg {
+  color: var(--color-success);
+}
+
+.printer-detected strong {
+  display: block;
+
+  font-size: 14px;
+}
+
+.printer-detected span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--color-muted);
+
+  font-size: 12px;
+}
+
+.flow-next-button {
+  min-height: 46px;
+  padding-inline: 25px;
+
+  border: 0;
+
+  color: #fff;
+}
+
+
+/* ---------------------------------------------------------
+   22. Scanner Upload Button
+   --------------------------------------------------------- */
+
+.upload-document-scanner-button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: min(100%, 1000px);
+  min-height: 48px;
+
+  margin: 14px auto 0;
+  padding: 0 22px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+
+  background: var(--color-surface);
+  color: var(--color-ink);
+
+  font-size: 14px;
+  font-weight: 750;
+
+  box-shadow: var(--shadow-soft);
+
+  text-decoration: none;
+
+  box-sizing: border-box;
+}
+
+.upload-document-scanner-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+
+/* =========================================================
+   DOCUMENT UPLOAD
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   23. Upload Page
+   --------------------------------------------------------- */
+
+.upload-step-main {
+  max-width: 1000px;
+}
+
+.upload-placeholder-card {
+  max-width: 680px;
+
+  margin: 0 auto;
+  padding: 70px 28px;
+
+  text-align: center;
+}
+
+.upload-placeholder-icon {
+  display: grid;
+
+  width: 70px;
+  height: 70px;
+
+  place-items: center;
+
+  margin: 0 auto 20px;
+
+  border-radius: 20px;
+
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.upload-placeholder-card h2 {
+  margin-bottom: 8px;
+
+  font-family: var(--font-heading);
+  font-size: 24px;
+}
+
+.upload-placeholder-card p {
+  margin-bottom: 18px;
+
+  color: var(--color-muted);
+}
+
+
+/* ---------------------------------------------------------
+   24. Drag & Drop Upload
+   --------------------------------------------------------- */
+
+.document-upload-card {
+  max-width: 720px;
+
+  margin: 0 auto;
+  padding: 56px 32px;
+
+  border-style: dashed;
+  border-width: 2px;
+
+  text-align: center;
+
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.document-upload-card.is-dragging {
+  border-color: var(--color-accent);
+
+  background: var(--color-accent-soft);
+
+  transform: translateY(-2px);
+}
+
+.document-upload-icon {
+  display: grid;
+
+  width: 72px;
+  height: 72px;
+
+  place-items: center;
+
+  margin: 0 auto 20px;
+
+  border-radius: 20px;
+
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.document-upload-card.is-dragging .document-upload-icon {
+  background: var(--color-surface);
+}
+
+.document-upload-card h2 {
+  margin-bottom: 8px;
+
+  font-family: var(--font-heading);
+  font-size: 26px;
+
+  letter-spacing: -0.03em;
+}
+
+.document-upload-card > p {
+  margin: 0;
+
+  color: var(--color-muted);
+
+  font-size: 14px;
+}
+
+
+/* ---------------------------------------------------------
+   25. Manual Upload
+   --------------------------------------------------------- */
+
+.upload-divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  max-width: 360px;
+
+  margin: 25px auto 18px;
+
+  color: var(--color-muted);
+
+  font-size: 12px;
+}
+
+.upload-divider::before,
+.upload-divider::after {
+  content: '';
+
+  flex: 1;
+
+  height: 1px;
+
+  background: var(--color-line);
+}
+
+.manual-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 48px;
+
+  padding: 0 24px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: var(--color-ink);
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.manual-upload-button:hover {
+  background: var(--color-accent);
+}
+
+.upload-format-note {
+  display: block;
+
+  margin-top: 13px;
+
+  color: var(--color-muted);
+
+  font-size: 12px;
+}
+
+.upload-error {
+  margin: 14px 0 0 !important;
+
+  color: var(--color-danger) !important;
+
+  font-size: 13px !important;
+}
+
+
+/* ---------------------------------------------------------
+   26. Selected Document
+   --------------------------------------------------------- */
+
+.selected-document {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin-top: 24px;
+  padding: 14px 16px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 13px;
+
+  background: var(--color-paper);
+
+  text-align: left;
+}
+
+.selected-document-info {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.selected-document-info > svg {
+  flex: 0 0 auto;
+
+  color: var(--color-success);
+}
+
+.selected-document-info div {
+  min-width: 0;
+}
+
+.selected-document-info strong,
+.selected-document-info span {
+  display: block;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.selected-document-info strong {
+  font-size: 13px;
+}
+
+.selected-document-info span {
+  margin-top: 3px;
+
+  color: var(--color-muted);
+
+  font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   27. Remove File
+   --------------------------------------------------------- */
+
+.remove-file-btn {
+  display: grid;
+
+  width: 32px;
+  height: 32px;
+
+  flex: 0 0 auto;
+
+  place-items: center;
+
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+
+  background: var(--color-surface);
+  color: var(--color-muted);
+
+  cursor: pointer;
+}
+
+.remove-file-btn:hover {
+  border-color: var(--color-danger);
+
+  color: var(--color-danger);
+}
+
+
+/* ---------------------------------------------------------
+   28. Connected Printer
+   --------------------------------------------------------- */
+
+.document-upload-card .connected-printer {
+  margin-top: 18px;
+}
+
+.connected-printer {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 9px 13px;
+
+  border-radius: 999px;
+
+  background: #f0fdf4;
+  color: var(--color-success);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   29. Tablet
+   --------------------------------------------------------- */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .container {
+    width: min(
+      var(--container-width),
+      calc(100% - 40px)
+    );
+  }
+
+  .navbar {
+    min-height: 78px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   30. Tablet & Small Desktop
+   --------------------------------------------------------- */
+
+@media (max-width: 800px) {
+  .print-flow-header {
+    grid-template-columns: 1fr auto;
+
+    width: calc(100% - 32px);
+  }
+
+  .flow-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .flow-back-link {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .flow-step {
+    display: none;
+  }
+
+  .scanner-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner-info {
+    display: none;
+  }
+
+  .upload-document-scanner-button {
+    width: 100%;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   31. Mobile
+   --------------------------------------------------------- */
+
+@media (max-width: 639px) {
+  .container {
+    width: min(
+      calc(100% - (var(--page-padding-mobile) * 2)),
+      var(--container-width)
+    );
+  }
+
+  .navbar {
+    min-height: 72px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+  .admin-button {
+    min-height: 40px;
+
+    padding-inline: 13px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+
+    min-height: 108px;
+
+    gap: 8px;
+  }
+
+  .print-flow-header {
+    min-height: 68px;
+  }
+
+  .scanner-main,
+  .upload-step-main {
+    padding-block: 38px 50px;
+  }
+
+  .scanner-heading {
+    margin-bottom: 25px;
+  }
+
+  .scanner-heading h1 {
+    font-size: 36px;
+  }
+
+  .scanner-heading p {
+    font-size: 14px;
+  }
+
+  .scanner-card {
+    padding: 9px;
+  }
+
+  .scanner-viewport {
+    min-height: 390px;
+
+    border-radius: 15px;
+  }
+
+  .scan-corner.top-left {
+    transform: translate(-92px, -92px);
+  }
+
+  .scan-corner.top-right {
+    transform: translate(92px, -92px);
+  }
+
+  .scan-corner.bottom-left {
+    transform: translate(-92px, 92px);
+  }
+
+  .scan-corner.bottom-right {
+    transform: translate(92px, 92px);
+  }
+
+  .printer-detected {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .flow-next-button {
+    width: 100%;
+  }
+
+  .upload-document-scanner-button {
+    margin-top: 12px;
+  }
+
+  .document-upload-card {
+    padding: 42px 18px;
+  }
+
+  .document-upload-card h2 {
+    font-size: 22px;
+  }
+
+  .selected-document {
+    align-items: flex-start;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   32. Large Desktop
+   --------------------------------------------------------- */
+
+@media (min-width: 1440px) {
+  .container {
+    width: min(
+      var(--container-width),
+      calc(100% - 64px)
+    );
+  }
+}
+
+
+/* ---------------------------------------------------------
+   33. Reduced Motion
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

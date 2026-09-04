@@ -1,0 +1,568 @@
+/* =========================================================
+   PRINTSTATION — MULTI-FILE PREVIEW
+   ========================================================= */
+
+/* =========================================================
+   01. FILE THUMBNAIL STRIP
+   ========================================================= */
+
+.preview-thumbnails {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 96px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-surface);
+  scrollbar-width: thin;
+  scrollbar-color: #c7c5c2 transparent;
+}
+
+.preview-thumbnails::-webkit-scrollbar {
+  height: 6px;
+}
+
+.preview-thumbnails::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-thumbnails::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  background: #c7c5c2;
+}
+
+/* =========================================================
+   02. FILE THUMBNAIL
+   ========================================================= */
+
+.preview-file-thumbnail {
+  position: relative;
+  display: block;
+  width: 74px;
+  height: 74px;
+  flex: 0 0 74px;
+  padding: 4px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-paper);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
+}
+
+.preview-file-thumbnail:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  transform: translateY(-1px);
+}
+
+.preview-file-thumbnail:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.preview-file-thumbnail.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+/* =========================================================
+   03. THUMBNAIL DOCUMENT
+   ========================================================= */
+
+.preview-file-thumbnail .preview-thumbnail-paper {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(23, 23, 23, 0.08);
+}
+
+.preview-file-thumbnail .preview-thumbnail-paper iframe,
+.preview-file-thumbnail .preview-thumbnail-paper img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+  background: #fff;
+  pointer-events: none;
+}
+
+/* =========================================================
+   04. FILE NUMBER BADGE
+   ========================================================= */
+
+.preview-file-thumbnail .preview-thumbnail-index {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: grid;
+  min-width: 21px;
+  height: 21px;
+  padding-inline: 5px;
+  place-items: center;
+  border: 2px solid var(--color-surface);
+  border-radius: 7px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(23, 23, 23, 0.18);
+}
+
+.preview-file-thumbnail.is-active .preview-thumbnail-index {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* =========================================================
+   05. EMPTY STATE
+   ========================================================= */
+
+.preview-thumbnails:empty {
+  display: none;
+}
+
+/* =========================================================
+   06. PRINT SUMMARY — OVERFLOW PROTECTION
+   ========================================================= */
+
+.print-summary {
+  min-width: 0;
+}
+
+.print-summary > div {
+  display: grid;
+  grid-template-columns: minmax(72px, 90px) minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+.print-summary > div > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-summary > div > strong {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   07. PRINT ACTION
+   ========================================================= */
+
+.continue-print-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 2px;
+  padding: 0 18px;
+  overflow: hidden;
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  background: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 22px rgba(232, 93, 42, 0.2);
+  cursor: pointer;
+  isolation: isolate;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.continue-print-button::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.55s ease;
+}
+
+.continue-print-button:hover:not(:disabled) {
+  border-color: var(--color-accent-dark);
+  background: var(--color-accent-dark);
+  box-shadow: 0 12px 28px rgba(232, 93, 42, 0.26);
+  transform: translateY(-1px);
+}
+
+.continue-print-button:hover:not(:disabled)::before {
+  transform: translateX(100%);
+}
+
+.continue-print-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(232, 93, 42, 0.2);
+}
+
+.continue-print-button:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+.continue-print-button:disabled {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  cursor: wait;
+  opacity: 0.78;
+  transform: none;
+}
+
+.continue-print-button svg {
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   08. PRINT PROCESSING OVERLAY
+   ========================================================= */
+
+.print-processing-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 23, 23, 0.38);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  animation: print-overlay-in 0.22s ease-out both;
+}
+
+.print-processing-card {
+  width: min(100%, 390px);
+  padding: 34px 30px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px rgba(23, 23, 23, 0.22);
+  text-align: center;
+  animation: print-card-in 0.28s ease-out both;
+}
+
+.print-processing-icon {
+  position: relative;
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  margin: 0 auto 22px;
+  border-radius: 18px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.print-processing-icon svg {
+  position: relative;
+  z-index: 2;
+}
+
+.print-processing-ring {
+  position: absolute;
+  inset: -7px;
+  border: 2px solid transparent;
+  border-top-color: var(--color-accent);
+  border-right-color: var(--color-accent);
+  border-radius: 50%;
+  animation: print-processing-spin 1s linear infinite;
+}
+
+.print-processing-card > strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--color-ink);
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.print-processing-card > p {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.print-processing-progress {
+  position: relative;
+  height: 6px;
+  margin: 24px 0 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-line);
+}
+
+.print-processing-progress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  animation: print-progress 2.2s ease-in-out forwards;
+}
+
+.print-processing-card > small {
+  display: block;
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.print-processing-spinner {
+  animation: print-processing-spin 0.9s linear infinite;
+}
+
+.print-complete-notice {
+  position: fixed;
+  z-index: 1001;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 13px 14px 13px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 13px;
+  background: #f0fdf4;
+  color: var(--color-success);
+  box-shadow: 0 14px 40px rgba(23, 23, 23, 0.12);
+  font-size: 13px;
+  font-weight: 700;
+  animation: print-notice-in 0.25s ease-out both;
+}
+
+.print-complete-notice button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.print-complete-notice button:hover {
+  background: rgba(25, 135, 84, 0.08);
+}
+
+@keyframes print-processing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes print-progress {
+  0% {
+    width: 4%;
+  }
+
+  25% {
+    width: 31%;
+  }
+
+  55% {
+    width: 64%;
+  }
+
+  80% {
+    width: 84%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes print-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes print-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes print-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   09. RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .preview-thumbnails {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .preview-file-thumbnail {
+    width: 68px;
+    height: 68px;
+    flex-basis: 68px;
+  }
+
+  .print-summary > div {
+    grid-template-columns: minmax(72px, 86px) minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   10. RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 639px) {
+  .preview-thumbnails {
+    min-height: 84px;
+    padding: 8px 10px;
+  }
+
+  .preview-file-thumbnail {
+    width: 60px;
+    height: 60px;
+    flex-basis: 60px;
+    border-radius: 8px;
+  }
+
+  .preview-file-thumbnail .preview-thumbnail-index {
+    right: 3px;
+    bottom: 3px;
+    min-width: 18px;
+    height: 18px;
+    padding-inline: 4px;
+    border-radius: 6px;
+    font-size: 9px;
+  }
+
+  .print-summary > div {
+    grid-template-columns: minmax(68px, 80px) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .continue-print-button {
+    min-height: 50px;
+    border-radius: 11px;
+    font-size: 13px;
+  }
+
+  .print-processing-overlay {
+    padding: 16px;
+  }
+
+  .print-processing-card {
+    padding: 30px 22px 26px;
+    border-radius: 19px;
+  }
+
+  .print-processing-icon {
+    width: 62px;
+    height: 62px;
+    margin-bottom: 19px;
+  }
+
+  .print-processing-card > strong {
+    font-size: 18px;
+  }
+
+  .print-complete-notice {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}
+
+/* =========================================================
+   11. RESPONSIVE — VERY SMALL DEVICES
+   ========================================================= */
+
+@media (max-width: 380px) {
+  .preview-thumbnails {
+    gap: 8px;
+  }
+
+  .preview-file-thumbnail {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  .print-summary > div {
+    grid-template-columns: minmax(64px, 76px) minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   12. ACCESSIBILITY — REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .continue-print-button,
+  .print-processing-overlay,
+  .print-processing-card,
+  .print-complete-notice {
+    animation: none;
+  }
+
+  .continue-print-button::before {
+    display: none;
+  }
+
+  .print-processing-ring,
+  .print-processing-spinner,
+  .print-processing-progress span {
+    animation: none;
+  }
+}
