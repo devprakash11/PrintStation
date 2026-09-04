@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { label: 'QR Codes', icon: QrCode, path: '/admin/qr-codes' },
   { label: 'Print Jobs', icon: FileText, path: '/admin/print-jobs' },
   { label: 'Users', icon: Users, path: '/admin/users' },
-  { label: 'Reports', icon: BarChart3 },
+  { label: 'Reports', icon: BarChart3, path: '/admin/reports' },
   { label: 'Settings', icon: Settings },
 ];
 
