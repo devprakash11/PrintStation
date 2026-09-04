@@ -1,3 +1,5 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import Home from './pages/Home/Home';
 import PrintScanner from './pages/Print/PrintScanner';
 import PrintUpload from './pages/Print/PrintUpload';
@@ -12,19 +14,25 @@ import Settings from './pages/Admin/Settings/Settings';
 import HelpCenter from './pages/Admin/HelpCenter/HelpCenter';
 
 export default function App() {
-  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/print" element={<PrintScanner />} />
+      <Route path="/print/upload" element={<PrintUpload />} />
+      <Route path="/admin" element={<AdminAuth />} />
 
-  if (path === '/print') return <PrintScanner />;
-  if (path === '/print/upload') return <PrintUpload />;
-  if (path === '/admin/qr-codes') return <QrCodeManagement />;
-  if (path === '/admin/printers') return <PrinterManagement />;
-  if (path === '/admin/print-jobs') return <PrintJob />;
-  if (path === '/admin/users') return <Users />;
-  if (path === '/admin/reports') return <Reports />;
-  if (path === '/admin/settings') return <Settings />;
-  if (path === '/admin/help') return <HelpCenter />;
-  if (path === '/admin/dashboard') return <AdminDashboard />;
-  if (path === '/admin') return <AdminAuth />;
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/printers" element={<PrinterManagement />} />
+        <Route path="/admin/qr-codes" element={<QrCodeManagement />} />
+        <Route path="/admin/print-jobs" element={<PrintJob />} />
+        <Route path="/admin/users" element={<Users />} />
+        <Route path="/admin/reports" element={<Reports />} />
+        <Route path="/admin/settings" element={<Settings />} />
+        <Route path="/admin/help" element={<HelpCenter />} />
+      </Route>
 
-  return <Home />;
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
