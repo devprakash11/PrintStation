@@ -55,7 +55,10 @@ function getSession() {
 }
 
 function hashText(value) {
-  return [...value].reduce((hash, character, index) => ((hash * 31 + character.charCodeAt(0) + index) >>> 0), 2166136261);
+  return [...value].reduce(
+    (hash, character, index) => ((hash * 31 + character.charCodeAt(0) + index) >>> 0),
+    2166136261,
+  );
 }
 
 function buildQrMatrix(value) {
@@ -69,8 +72,13 @@ function buildQrMatrix(value) {
         const targetRow = startRow + row;
         const targetCol = startCol + col;
         if (targetRow < 0 || targetRow >= size || targetCol < 0 || targetCol >= size) continue;
+
         reserved[targetRow][targetCol] = true;
-        matrix[targetRow][targetCol] = row >= 0 && row <= 6 && col >= 0 && col <= 6 && (row === 0 || row === 6 || col === 0 || col === 6 || (row >= 2 && row <= 4 && col >= 2 && col <= 4));
+        matrix[targetRow][targetCol] =
+          row >= 0 && row <= 6 &&
+          col >= 0 && col <= 6 &&
+          (row === 0 || row === 6 || col === 0 || col === 6 ||
+            (row >= 2 && row <= 4 && col >= 2 && col <= 4));
       }
     }
   };
@@ -109,11 +117,30 @@ function QrVisual({ value, size = 156 }) {
   const cellSize = size / 21;
 
   return (
-    <svg className="qr-code-visual" viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label={`QR code for ${value}`}>
+    <svg
+      className="qr-code-visual"
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+      height={size}
+      role="img"
+      aria-label={`QR code for ${value}`}
+    >
       <rect width={size} height={size} fill="#ffffff" />
-      {matrix.flatMap((row, rowIndex) => row.map((cell, colIndex) => cell && (
-        <rect key={`${rowIndex}-${colIndex}`} x={colIndex * cellSize} y={rowIndex * cellSize} width={cellSize + 0.2} height={cellSize + 0.2} fill="#171717" />
-      )))}
+      {matrix.flatMap((row, rowIndex) =>
+        row.map(
+          (cell, colIndex) =>
+            cell && (
+              <rect
+                key={`${rowIndex}-${colIndex}`}
+                x={colIndex * cellSize}
+                y={rowIndex * cellSize}
+                width={cellSize + 0.2}
+                height={cellSize + 0.2}
+                fill="#171717"
+              />
+            ),
+        ),
+      )}
     </svg>
   );
 }
@@ -121,6 +148,104 @@ function QrVisual({ value, size = 156 }) {
 function StatusBadge({ status }) {
   const type = status === 'Online' ? 'success' : status === 'Printing' ? 'warning' : 'danger';
   return <span className={`qr-status-badge is-${type}`}><i />{status}</span>;
+}
+
+function drawRoundedRect(context, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.arcTo(x + width, y, x + width, y + height, safeRadius);
+  context.arcTo(x + width, y + height, x, y + height, safeRadius);
+  context.arcTo(x, y + height, x, y, safeRadius);
+  context.arcTo(x, y, x + width, y, safeRadius);
+  context.closePath();
+}
+
+function drawQrLabel(context, printer) {
+  const width = 700;
+  const height = 900;
+  const accent = '#e85d2a';
+  const ink = '#171717';
+  const muted = '#77736f';
+  const paper = '#f8f7f5';
+  const matrix = buildQrMatrix(`printstation://${printer.id}`);
+
+  context.fillStyle = accent;
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = '#ffffff';
+  context.textAlign = 'center';
+  context.font = '700 44px Arial, sans-serif';
+  context.fillText('PrintStation', width / 2, 82);
+
+  drawRoundedRect(context, 48, 122, width - 96, 700, 34);
+  context.fill();
+
+  context.fillStyle = accent;
+  context.font = '800 32px Arial, sans-serif';
+  context.fillText('SCAN TO CONNECT', width / 2, 190);
+
+  const qrSize = 430;
+  const qrX = (width - qrSize) / 2;
+  const qrY = 235;
+  const cellSize = qrSize / 21;
+
+  context.fillStyle = '#ffffff';
+  context.fillRect(qrX - 18, qrY - 18, qrSize + 36, qrSize + 36);
+  context.fillStyle = '#171717';
+
+  matrix.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      if (!cell) return;
+      context.fillRect(
+        qrX + colIndex * cellSize,
+        qrY + rowIndex * cellSize,
+        cellSize + 0.5,
+        cellSize + 0.5,
+      );
+    });
+  });
+
+  context.fillStyle = paper;
+  drawRoundedRect(context, 95, 700, width - 190, 88, 16);
+  context.fill();
+
+  context.textAlign = 'left';
+  context.fillStyle = ink;
+  context.font = '700 21px Arial, sans-serif';
+  context.fillText(printer.name, 125, 735);
+  context.fillStyle = muted;
+  context.font = '500 17px Arial, sans-serif';
+  context.fillText(`${printer.id}  ·  ${printer.location}`, 125, 764);
+
+  context.fillStyle = '#ffffff';
+  context.textAlign = 'center';
+  context.font = '600 18px Arial, sans-serif';
+  context.fillText('Scan → Connect → Upload → Print', width / 2, 858);
+}
+
+function downloadQrLabel(printer) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 700;
+  canvas.height = 900;
+  const context = canvas.getContext('2d');
+
+  if (!context) return;
+
+  drawQrLabel(context, printer);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${printer.id}-PrintStation-QR.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 }
 
 export default function QrCodeManagement() {
@@ -135,9 +260,15 @@ export default function QrCodeManagement() {
 
   const filteredPrinters = useMemo(() => {
     const query = search.trim().toLowerCase();
+
     return PRINTERS.filter((printer) => {
       const matchesFilter = filter === 'All' || printer.status === filter;
-      const matchesSearch = !query || [printer.name, printer.id, printer.model, printer.location].some((value) => value.toLowerCase().includes(query));
+      const matchesSearch =
+        !query ||
+        [printer.name, printer.id, printer.model, printer.location].some((value) =>
+          value.toLowerCase().includes(query),
+        );
+
       return matchesFilter && matchesSearch;
     });
   }, [filter, search]);
@@ -155,22 +286,6 @@ export default function QrCodeManagement() {
   const handleFilter = () => {
     const next = filter === 'All' ? 'Online' : filter === 'Online' ? 'Printing' : filter === 'Printing' ? 'Offline' : 'All';
     setFilter(next);
-  };
-
-  const handleDownload = (printer) => {
-    const size = 320;
-    const matrix = buildQrMatrix(`printstation://${printer.id}`);
-    const cellSize = size / 21;
-    const modules = matrix.map((row) => row.map((cell) => cell ? `<rect x="${row.indexOf(cell) * cellSize}" />` : '').join('')).join('');
-    const cells = matrix.flatMap((row, rowIndex) => row.map((cell, colIndex) => cell ? `<rect x="${colIndex * cellSize}" y="${rowIndex * cellSize}" width="${cellSize + 0.4}" height="${cellSize + 0.4}" fill="#171717"/>` : '')).join('');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="100%" height="100%" fill="white"/>${cells}${modules ? '' : ''}</svg>`;
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${printer.id}-PrintStation-QR.svg`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   if (!session) {
@@ -248,7 +363,7 @@ export default function QrCodeManagement() {
 
                 <div className="qr-card-actions">
                   <button type="button" className="qr-view-button" onClick={() => setSelectedPrinter(printer)}>View QR</button>
-                  <button type="button" className="qr-download-button" onClick={() => handleDownload(printer)}><Download size={16} />Download</button>
+                  <button type="button" className="qr-download-button" onClick={() => downloadQrLabel(printer)}><Download size={16} />Download</button>
                 </div>
               </article>
             ))}
@@ -262,12 +377,24 @@ export default function QrCodeManagement() {
         <div className="qr-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setSelectedPrinter(null)}>
           <section className="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
             <button className="qr-modal-close" type="button" onClick={() => setSelectedPrinter(null)} aria-label="Close QR code preview"><X size={19} /></button>
-            <div className="qr-modal-icon"><QrCode size={22} /></div>
-            <span className="qr-modal-eyebrow">Printer QR Code</span>
-            <h2 id="qr-modal-title">{selectedPrinter.name}</h2>
-            <p>{selectedPrinter.id} · Scan to connect and start printing.</p>
-            <div className="qr-modal-code"><QrVisual value={`printstation://${selectedPrinter.id}`} size={230} /></div>
-            <div className="qr-modal-actions"><button type="button" className="qr-download-button" onClick={() => handleDownload(selectedPrinter)}><Download size={16} />Download QR</button><button type="button" className="qr-view-button" onClick={() => window.print()}><Printer size={16} />Print Label</button></div>
+
+            <div className="qr-label-preview">
+              <div className="qr-label-brand">PrintStation</div>
+              <div className="qr-label-card">
+                <span className="qr-label-eyebrow">SCAN TO CONNECT</span>
+                <div className="qr-label-code"><QrVisual value={`printstation://${selectedPrinter.id}`} size={250} /></div>
+                <div className="qr-label-printer">
+                  <strong>{selectedPrinter.name}</strong>
+                  <span>{selectedPrinter.id} · {selectedPrinter.location}</span>
+                </div>
+              </div>
+              <div className="qr-label-footer">Scan → Connect → Upload → Print</div>
+            </div>
+
+            <div className="qr-modal-actions">
+              <button type="button" className="qr-download-button" onClick={() => downloadQrLabel(selectedPrinter)}><Download size={16} />Download QR</button>
+              <button type="button" className="qr-view-button" onClick={() => window.print()}><Printer size={16} />Print Label</button>
+            </div>
           </section>
         </div>
       )}
