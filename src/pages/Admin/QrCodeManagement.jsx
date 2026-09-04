@@ -15,6 +15,7 @@ import {
   QrCode,
   Search,
   Settings,
+  Trash2,
   UserRound,
   Users,
   Wifi,
@@ -24,6 +25,7 @@ import '../../styles/adminDashboard.css';
 import '../../styles/qrCodeManagement.css';
 
 const SESSION_KEY = 'printstation_admin_session';
+const DELETED_QR_KEY = 'printstation_deleted_qr_codes';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
@@ -54,6 +56,20 @@ function getSession() {
   }
 }
 
+function getDeletedQrIds() {
+  try {
+    const value = JSON.parse(localStorage.getItem(DELETED_QR_KEY) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function getInitialPrinters() {
+  const deletedIds = new Set(getDeletedQrIds());
+  return PRINTERS.filter((printer) => !deletedIds.has(printer.id));
+}
+
 function hashText(value) {
   return [...value].reduce(
     (hash, character, index) => ((hash * 31 + character.charCodeAt(0) + index) >>> 0),
@@ -71,6 +87,7 @@ function buildQrMatrix(value) {
       for (let col = -1; col <= 7; col += 1) {
         const targetRow = startRow + row;
         const targetCol = startCol + col;
+
         if (targetRow < 0 || targetRow >= size || targetCol < 0 || targetCol >= size) continue;
 
         reserved[targetRow][targetCol] = true;
@@ -197,12 +214,7 @@ function drawQrLabel(context, printer) {
   matrix.forEach((row, rowIndex) => {
     row.forEach((cell, colIndex) => {
       if (!cell) return;
-      context.fillRect(
-        qrX + colIndex * cellSize,
-        qrY + rowIndex * cellSize,
-        cellSize + 0.5,
-        cellSize + 0.5,
-      );
+      context.fillRect(qrX + colIndex * cellSize, qrY + rowIndex * cellSize, cellSize + 0.5, cellSize + 0.5);
     });
   });
 
@@ -250,6 +262,7 @@ function downloadQrLabel(printer) {
 
 export default function QrCodeManagement() {
   const [session] = useState(getSession);
+  const [printers, setPrinters] = useState(getInitialPrinters);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [range, setRange] = useState('Last 7 Days');
   const [search, setSearch] = useState('');
@@ -261,7 +274,7 @@ export default function QrCodeManagement() {
   const filteredPrinters = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return PRINTERS.filter((printer) => {
+    return printers.filter((printer) => {
       const matchesFilter = filter === 'All' || printer.status === filter;
       const matchesSearch =
         !query ||
@@ -271,7 +284,24 @@ export default function QrCodeManagement() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [filter, search]);
+  }, [filter, printers, search]);
+
+  const handleDeleteQrCode = (printer) => {
+    const confirmed = window.confirm(
+      `Delete the QR code for ${printer.name} (${printer.id})? This will remove it from the QR Codes page.`,
+    );
+
+    if (!confirmed) return;
+
+    const deletedIds = new Set(getDeletedQrIds());
+    deletedIds.add(printer.id);
+    localStorage.setItem(DELETED_QR_KEY, JSON.stringify([...deletedIds]));
+
+    setPrinters((currentPrinters) => currentPrinters.filter((item) => item.id !== printer.id));
+    setSelectedPrinter((currentPrinter) =>
+      currentPrinter?.id === printer.id ? null : currentPrinter,
+    );
+  };
 
   const handleNavigation = (item) => {
     setMobileOpen(false);
@@ -284,7 +314,14 @@ export default function QrCodeManagement() {
   };
 
   const handleFilter = () => {
-    const next = filter === 'All' ? 'Online' : filter === 'Online' ? 'Printing' : filter === 'Printing' ? 'Offline' : 'All';
+    const next = filter === 'All'
+      ? 'Online'
+      : filter === 'Online'
+        ? 'Printing'
+        : filter === 'Printing'
+          ? 'Offline'
+          : 'All';
+
     setFilter(next);
   };
 
@@ -302,12 +339,25 @@ export default function QrCodeManagement() {
           <button className="admin-sidebar-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
 
-        <button className="admin-new-job" type="button" onClick={() => (window.location.href = '/print/upload')}><Plus size={19} />New Print Job</button>
+        <button className="admin-new-job" type="button" onClick={() => (window.location.href = '/print/upload')}>
+          <Plus size={19} />
+          New Print Job
+        </button>
 
         <nav className="admin-nav" aria-label="Admin navigation">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            return <button key={item.label} type="button" className={`admin-nav-item ${item.label === 'QR Codes' ? 'is-active' : ''}`} onClick={() => handleNavigation(item)}><Icon size={20} strokeWidth={1.9} /><span>{item.label}</span></button>;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={`admin-nav-item ${item.label === 'QR Codes' ? 'is-active' : ''}`}
+                onClick={() => handleNavigation(item)}
+              >
+                <Icon size={20} strokeWidth={1.9} />
+                <span>{item.label}</span>
+              </button>
+            );
           })}
         </nav>
 
@@ -329,15 +379,33 @@ export default function QrCodeManagement() {
           </div>
           <div className="admin-topbar-actions">
             <div className="admin-user-chip"><span className="admin-user-avatar"><UserRound size={17} /></span><span>{displayName}</span></div>
-            <label className="admin-date-filter"><CalendarDays size={19} /><select value={range} onChange={(event) => setRange(event.target.value)}><option>Today</option><option>Last 7 Days</option><option>Last 30 Days</option></select></label>
+            <label className="admin-date-filter">
+              <CalendarDays size={19} />
+              <select value={range} onChange={(event) => setRange(event.target.value)}>
+                <option>Today</option>
+                <option>Last 7 Days</option>
+                <option>Last 30 Days</option>
+              </select>
+            </label>
           </div>
         </header>
 
         <section className="admin-content qr-management-content" aria-label="QR code management">
           <div className="qr-toolbar">
-            <label className="qr-search"><Search size={19} aria-hidden="true" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search printers or QR codes..." aria-label="Search QR codes" />{search && <button type="button" onClick={() => setSearch('')} aria-label="Clear search"><X size={15} /></button>}</label>
-            <button className={`qr-filter-button ${filter !== 'All' ? 'is-filtered' : ''}`} type="button" onClick={handleFilter}><Filter size={17} />Filter{filter !== 'All' && <span>{filter}</span>}</button>
-            <button className="qr-generate-button" type="button" onClick={() => setSelectedPrinter(PRINTERS[0])}><Plus size={18} />Generate QR Code</button>
+            <label className="qr-search">
+              <Search size={19} aria-hidden="true" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search printers or QR codes..." aria-label="Search QR codes" />
+              {search && <button type="button" onClick={() => setSearch('')} aria-label="Clear search"><X size={15} /></button>}
+            </label>
+            <button className={`qr-filter-button ${filter !== 'All' ? 'is-filtered' : ''}`} type="button" onClick={handleFilter}>
+              <Filter size={17} />
+              Filter
+              {filter !== 'All' && <span>{filter}</span>}
+            </button>
+            <button className="qr-generate-button" type="button" onClick={() => printers[0] && setSelectedPrinter(printers[0])} disabled={!printers.length}>
+              <Plus size={18} />
+              Generate QR Code
+            </button>
           </div>
 
           <div className="qr-summary-row">
@@ -354,7 +422,9 @@ export default function QrCodeManagement() {
                   <StatusBadge status={printer.status} />
                 </div>
 
-                <div className="qr-preview-area"><div className="qr-preview-frame"><QrVisual value={`printstation://${printer.id}`} size={156} /></div></div>
+                <div className="qr-preview-area">
+                  <div className="qr-preview-frame"><QrVisual value={`printstation://${printer.id}`} size={156} /></div>
+                </div>
 
                 <div className="qr-card-meta">
                   <span><Wifi size={15} /> {printer.location}</span>
@@ -364,12 +434,22 @@ export default function QrCodeManagement() {
                 <div className="qr-card-actions">
                   <button type="button" className="qr-view-button" onClick={() => setSelectedPrinter(printer)}>View QR</button>
                   <button type="button" className="qr-download-button" onClick={() => downloadQrLabel(printer)}><Download size={16} />Download</button>
+                  <button type="button" className="qr-delete-button" onClick={() => handleDeleteQrCode(printer)} aria-label={`Delete QR code for ${printer.name}`}>
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
                 </div>
               </article>
             ))}
           </div>
 
-          {!filteredPrinters.length && <div className="qr-empty-state"><QrCode size={30} /><h2>No QR codes found</h2><p>Try another printer name, ID, or status filter.</p></div>}
+          {!filteredPrinters.length && (
+            <div className="qr-empty-state">
+              <QrCode size={30} />
+              <h2>No QR codes found</h2>
+              <p>Try another printer name, ID, or status filter.</p>
+            </div>
+          )}
         </section>
       </main>
 
@@ -381,7 +461,7 @@ export default function QrCodeManagement() {
             <div className="qr-label-preview">
               <div className="qr-label-brand">PrintStation</div>
               <div className="qr-label-card">
-                <span className="qr-label-eyebrow">SCAN TO CONNECT</span>
+                <span className="qr-label-eyebrow" id="qr-modal-title">SCAN TO CONNECT</span>
                 <div className="qr-label-code"><QrVisual value={`printstation://${selectedPrinter.id}`} size={250} /></div>
                 <div className="qr-label-printer">
                   <strong>{selectedPrinter.name}</strong>
@@ -394,6 +474,7 @@ export default function QrCodeManagement() {
             <div className="qr-modal-actions">
               <button type="button" className="qr-download-button" onClick={() => downloadQrLabel(selectedPrinter)}><Download size={16} />Download QR</button>
               <button type="button" className="qr-view-button" onClick={() => window.print()}><Printer size={16} />Print Label</button>
+              <button type="button" className="qr-delete-button" onClick={() => handleDeleteQrCode(selectedPrinter)}><Trash2 size={16} />Delete QR</button>
             </div>
           </section>
         </div>
