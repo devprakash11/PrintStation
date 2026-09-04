@@ -1,0 +1,813 @@
+/* =========================================================
+   PRINTSTATION — PRINT JOBS
+   Table-first admin management page.
+   ========================================================= */
+
+/* =========================================================
+   01. PAGE LAYOUT
+   ========================================================= */
+
+.print-jobs-page {
+  --jobs-header-bg: #faf8f6;
+}
+
+.print-jobs-topbar {
+  padding-bottom: 12px;
+}
+
+.print-jobs-content {
+  gap: 18px;
+  padding-top: 8px;
+}
+
+/* =========================================================
+   02. TOOLBAR
+   ========================================================= */
+
+.print-jobs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.print-jobs-search,
+.print-jobs-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  box-shadow: var(--admin-shadow-xs);
+  transition: border-color var(--admin-transition), box-shadow var(--admin-transition);
+}
+
+.print-jobs-search {
+  width: min(100%, 430px);
+  padding: 0 13px;
+}
+
+.print-jobs-filter {
+  min-width: 160px;
+  padding: 0 12px;
+}
+
+.print-jobs-search:focus-within,
+.print-jobs-filter:focus-within {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-soft);
+}
+
+.print-jobs-search svg,
+.print-jobs-filter svg {
+  flex: 0 0 auto;
+  color: var(--admin-accent);
+}
+
+.print-jobs-search input,
+.print-jobs-filter select {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--admin-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.print-jobs-search input::placeholder {
+  color: var(--admin-muted-light);
+}
+
+.print-jobs-filter select {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.print-jobs-clear {
+  min-height: 42px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--admin-radius-sm);
+  background: transparent;
+  color: var(--admin-accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.print-jobs-clear:hover {
+  background: var(--admin-accent-soft);
+}
+
+/* =========================================================
+   03. TABLE CARD
+   ========================================================= */
+
+.print-jobs-card {
+  overflow: hidden;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-xs);
+}
+
+.print-jobs-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 76px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.print-jobs-card-header h2 {
+  margin: 0;
+  color: var(--admin-ink);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.print-jobs-card-header > div:first-child span {
+  display: block;
+  margin-top: 4px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.print-jobs-header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   04. DESKTOP TABLE
+   ========================================================= */
+
+.print-jobs-table-wrap {
+  overflow-x: auto;
+}
+
+.print-jobs-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.print-jobs-table th,
+.print-jobs-table td {
+  padding: 0 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.print-jobs-table th {
+  height: 42px;
+  border-bottom: 1px solid var(--admin-line);
+  background: var(--jobs-header-bg);
+  color: var(--admin-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.print-jobs-table td {
+  height: 74px;
+  border-bottom: 1px solid var(--admin-line);
+  color: var(--admin-ink-soft);
+  font-size: 12px;
+}
+
+.print-jobs-table tbody tr {
+  transition: background var(--admin-transition);
+}
+
+.print-jobs-table tbody tr:hover {
+  background: #fdfbf9;
+}
+
+.print-jobs-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.print-jobs-table th:nth-child(1),
+.print-jobs-table td:nth-child(1) { width: 11%; }
+
+.print-jobs-table th:nth-child(2),
+.print-jobs-table td:nth-child(2) { width: 18%; }
+
+.print-jobs-table th:nth-child(3),
+.print-jobs-table td:nth-child(3) { width: 8%; }
+
+.print-jobs-table th:nth-child(4),
+.print-jobs-table td:nth-child(4) { width: 10%; }
+
+.print-jobs-table th:nth-child(5),
+.print-jobs-table td:nth-child(5) { width: 6%; text-align: center; }
+
+.print-jobs-table th:nth-child(6),
+.print-jobs-table td:nth-child(6) { width: 6%; text-align: center; }
+
+.print-jobs-table th:nth-child(7),
+.print-jobs-table td:nth-child(7) { width: 11%; }
+
+.print-jobs-table th:nth-child(8),
+.print-jobs-table td:nth-child(8) { width: 10%; }
+
+.print-jobs-table th:nth-child(9),
+.print-jobs-table td:nth-child(9) { width: 12%; }
+
+.print-jobs-table th:nth-child(10),
+.print-jobs-table td:nth-child(10) { width: 8%; text-align: center; }
+
+/* =========================================================
+   05. TABLE CONTENT
+   ========================================================= */
+
+.print-job-id {
+  display: inline-block;
+  color: var(--admin-accent-dark);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.print-job-document {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.print-job-document > span:last-child,
+.print-job-document > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-job-file-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.print-job-settings {
+  color: var(--admin-ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.print-job-date {
+  display: grid;
+  gap: 2px;
+  color: var(--admin-ink-soft);
+  white-space: nowrap;
+}
+
+.print-job-date small {
+  color: var(--admin-muted);
+  font-size: 10px;
+}
+
+/* =========================================================
+   06. STATUS
+   ========================================================= */
+
+.print-job-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.print-job-status i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.print-job-status.is-completed {
+  border-color: var(--admin-success-line);
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+}
+
+.print-job-status.is-printing,
+.print-job-status.is-queued {
+  border-color: var(--admin-warning-line);
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+}
+
+.print-job-status.is-failed,
+.print-job-status.is-cancelled {
+  border-color: var(--admin-danger-line);
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+}
+
+/* =========================================================
+   07. ROW ACTION
+   ========================================================= */
+
+.print-job-action {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-ink-soft);
+  cursor: pointer;
+  transition: color var(--admin-transition), background var(--admin-transition), border-color var(--admin-transition), transform var(--admin-transition);
+}
+
+.print-job-action:hover {
+  border-color: var(--admin-accent-muted);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   08. EMPTY STATE
+   ========================================================= */
+
+.print-jobs-empty {
+  display: grid;
+  min-height: 250px;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 30px;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.print-jobs-empty svg {
+  color: var(--admin-accent);
+}
+
+.print-jobs-empty strong {
+  color: var(--admin-ink);
+  font-size: 15px;
+}
+
+.print-jobs-empty span {
+  font-size: 12px;
+}
+
+.print-jobs-empty button {
+  min-height: 36px;
+  margin-top: 5px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-accent-dark);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.print-jobs-empty button:hover {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+}
+
+/* =========================================================
+   09. PAGINATION
+   ========================================================= */
+
+.print-jobs-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 62px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--admin-line);
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.print-jobs-pagination > span strong {
+  color: var(--admin-ink-soft);
+  font-weight: 800;
+}
+
+.print-jobs-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.print-jobs-pagination button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background var(--admin-transition), color var(--admin-transition), border-color var(--admin-transition);
+}
+
+.print-jobs-pagination button:hover:not(:disabled) {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.print-jobs-pagination button.is-active {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent);
+  color: #ffffff;
+}
+
+.print-jobs-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   10. MOBILE JOB CARDS
+   ========================================================= */
+
+.print-jobs-mobile-list {
+  display: none;
+}
+
+.print-job-mobile-card {
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.print-job-mobile-card:last-child {
+  border-bottom: 0;
+}
+
+.print-job-mobile-top,
+.print-job-mobile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.print-job-mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.print-job-mobile-grid span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--admin-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.print-job-mobile-grid small {
+  color: var(--admin-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.print-job-mobile-footer {
+  padding-top: 3px;
+  color: var(--admin-muted);
+  font-size: 10px;
+}
+
+.print-job-mobile-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--admin-accent-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* =========================================================
+   11. DETAILS MODAL
+   ========================================================= */
+
+.print-job-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 23, 23, 0.42);
+  backdrop-filter: blur(3px);
+}
+
+.print-job-modal {
+  width: min(100%, 520px);
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  border-radius: 18px;
+  background: var(--admin-surface);
+  box-shadow: 0 24px 70px rgba(23, 23, 23, 0.2);
+}
+
+.print-job-modal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.print-job-modal > header span {
+  color: var(--admin-muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.print-job-modal > header h2 {
+  margin: 4px 0 0;
+  color: var(--admin-ink);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.print-job-modal > header button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-sm);
+  background: transparent;
+  color: var(--admin-muted);
+  cursor: pointer;
+}
+
+.print-job-modal > header button:hover {
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-dark);
+}
+
+.print-job-modal-document {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 22px;
+  padding: 14px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-soft);
+}
+
+.print-job-modal-document > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.print-job-modal-document strong {
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-job-modal-document div span {
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+
+.print-job-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 22px 20px;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-line);
+}
+
+.print-job-details-grid > div {
+  min-width: 0;
+  padding: 13px;
+  background: var(--admin-surface);
+}
+
+.print-job-details-grid dt {
+  margin-bottom: 5px;
+  color: var(--admin-muted);
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.print-job-details-grid dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-job-modal > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--admin-line);
+}
+
+.print-job-secondary,
+.print-job-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.print-job-secondary {
+  border: 1px solid var(--admin-line-strong);
+  background: var(--admin-surface);
+  color: var(--admin-ink-soft);
+}
+
+.print-job-primary {
+  border: 1px solid var(--admin-accent);
+  background: var(--admin-accent);
+  color: #ffffff;
+}
+
+.print-job-primary:hover {
+  background: var(--admin-accent-dark);
+}
+
+/* =========================================================
+   12. RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .print-jobs-table {
+    min-width: 1000px;
+  }
+}
+
+@media (max-width: 800px) {
+  .print-jobs-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .print-jobs-search {
+    width: 100%;
+  }
+
+  .print-jobs-filter {
+    flex: 1;
+  }
+
+  .print-jobs-clear {
+    margin-left: 0;
+  }
+
+  .print-jobs-table-wrap {
+    display: none;
+  }
+
+  .print-jobs-mobile-list {
+    display: block;
+  }
+
+  .print-jobs-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .print-jobs-pagination > div {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 639px) {
+  .print-jobs-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .print-jobs-header-meta {
+    display: none;
+  }
+
+  .print-job-modal-backdrop {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .print-job-modal {
+    border-radius: 16px;
+  }
+
+  .print-job-details-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =========================================================
+   13. REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .print-jobs-search,
+  .print-jobs-filter,
+  .print-job-action,
+  .print-jobs-pagination button,
+  .print-jobs-table tbody tr {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   14. PRINT
+   ========================================================= */
+
+@media print {
+  .admin-sidebar,
+  .admin-topbar,
+  .print-jobs-toolbar,
+  .print-jobs-pagination,
+  .print-job-modal-backdrop {
+    display: none !important;
+  }
+
+  .admin-main {
+    width: 100%;
+    margin: 0;
+  }
+
+  .print-jobs-content {
+    padding: 0;
+  }
+
+  .print-jobs-table {
+    min-width: 0;
+  }
+}
