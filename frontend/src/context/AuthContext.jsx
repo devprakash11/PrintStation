@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { AUTH_UNAUTHORIZED_EVENT } from '../services/api.js';
 import { authService } from '../services/authService.js';
 
 const AuthContext = createContext(null);
@@ -6,6 +7,12 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('loading');
+
+  const clearAuthenticatedState = useCallback(() => {
+    authService.clearSession();
+    setUser(null);
+    setStatus('unauthenticated');
+  }, []);
 
   const refreshUser = useCallback(async () => {
     const token = authService.getToken();
@@ -18,22 +25,22 @@ export function AuthProvider({ children }) {
     try {
       const response = await authService.getMe();
       const currentUser = response?.data ?? null;
-      if (!currentUser) throw new Error('Session is no longer valid.');
+      if (!currentUser || currentUser.status === 'suspended') throw new Error('Session is no longer valid.');
       authService.saveSession(currentUser, token);
       setUser(currentUser);
       setStatus('authenticated');
       return currentUser;
     } catch {
-      authService.clearSession();
-      setUser(null);
-      setStatus('unauthenticated');
+      clearAuthenticatedState();
       return null;
     }
-  }, []);
+  }, [clearAuthenticatedState]);
 
   useEffect(() => {
     refreshUser();
-  }, [refreshUser]);
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, clearAuthenticatedState);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, clearAuthenticatedState);
+  }, [refreshUser, clearAuthenticatedState]);
 
   const login = useCallback(async (credentials) => {
     const response = await authService.login(credentials);
