@@ -1,0 +1,17 @@
+{
+  "name": "printstation-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Windows desktop bridge between PrintStation and installed printers",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}
