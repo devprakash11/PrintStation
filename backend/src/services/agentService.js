@@ -4,6 +4,9 @@ import { env } from '../config/env.js';
 
 const hashSecret = value => crypto.createHmac('sha256', env.agentSecretPepper).update(value).digest('hex');
 const makeSecret = () => crypto.randomBytes(32).toString('hex');
+const MAX_RETRIES = 3;
+
+const activeSockets = new Map();
 
 export function agentDownloadPath(jobId) {
   return `/api/v1/agents/files/${encodeURIComponent(jobId)}`;
@@ -60,6 +63,13 @@ export async function registerAgentSocket(ws) {
 
         agentId = agent.id;
         ws.agentId = agentId;
+
+        const previousSocket = activeSockets.get(agentId);
+        if (previousSocket && previousSocket !== ws && previousSocket.readyState === 1) {
+          previousSocket.close(4002, 'Replaced by a newer connection');
+        }
+        activeSockets.set(agentId, ws);
+
         await query(`UPDATE printer_agents SET status='online',last_seen_at=now() WHERE id=$1`, [agentId]);
         ws.send(JSON.stringify({ type: 'authenticated', agentId }));
         return sendQueuedJobs(ws, agentId);
@@ -92,7 +102,9 @@ export async function registerAgentSocket(ws) {
                started_at=CASE WHEN $1 IN ('printing','completed') THEN COALESCE(started_at,now()) ELSE started_at END,
                completed_at=CASE WHEN $1 IN ('completed','failed','cancelled') THEN now() ELSE completed_at END,
                updated_at=now(),
-               error_message=$2
+               error_message=$2,
+               claimed_agent_id=CASE WHEN $1 IN ('completed','failed','cancelled') THEN NULL ELSE claimed_agent_id END,
+               claimed_at=CASE WHEN $1 IN ('completed','failed','cancelled') THEN NULL ELSE claimed_at END
            WHERE id=$3 AND printer_id IN (SELECT id FROM printers WHERE agent_id=$4)`,
           [msg.status, msg.error || null, msg.jobId, agentId],
         );
@@ -100,19 +112,35 @@ export async function registerAgentSocket(ws) {
       }
     } catch (error) {
       console.error('[agent] message handling failed:', error);
-      if (ws.readyState === 1) ws.send(JSON.stringify({ type:'error', message:'Invalid agent message.' }));
+      if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'error', message: 'Invalid agent message.' }));
     }
   });
 
   ws.on('close', async () => {
-    if (agentId) {
+    if (!agentId) return;
+    if (activeSockets.get(agentId) === ws) {
+      activeSockets.delete(agentId);
       await query(`UPDATE printer_agents SET status='offline' WHERE id=$1`, [agentId]).catch(() => {});
+
+      await query(
+        `UPDATE print_jobs
+         SET status='queued',claimed_agent_id=NULL,claimed_at=NULL,retry_count=retry_count+1,updated_at=now(),error_message='Agent disconnected before acknowledging the job.'
+         WHERE claimed_agent_id=$1 AND status='accepted' AND retry_count < $2`,
+        [agentId, MAX_RETRIES],
+      ).catch(() => {});
+
+      await query(
+        `UPDATE print_jobs
+         SET status='failed',claimed_agent_id=NULL,claimed_at=NULL,updated_at=now(),completed_at=now(),error_message='Agent disconnected repeatedly while dispatching the job.'
+         WHERE claimed_agent_id=$1 AND status='accepted' AND retry_count >= $2`,
+        [agentId, MAX_RETRIES],
+      ).catch(() => {});
     }
   });
 }
 
 async function sendQueuedJobs(ws, agentId) {
-  if (ws.readyState !== 1) return;
+  if (ws.readyState !== 1 || activeSockets.get(agentId) !== ws) return;
 
   const { rows } = await query(
     `SELECT j.id job_id,j.printer_id,j.copies,j.pages,j.color_mode,j.paper_size,j.orientation,
@@ -128,18 +156,38 @@ async function sendQueuedJobs(ws, agentId) {
   );
 
   for (const job of rows) {
+    if (ws.readyState !== 1 || activeSockets.get(agentId) !== ws) break;
+
     const claimed = await query(
-      `UPDATE print_jobs SET status='accepted',updated_at=now() WHERE id=$1 AND status='queued' RETURNING id`,
-      [job.job_id],
+      `UPDATE print_jobs
+       SET status='accepted',claimed_agent_id=$2,claimed_at=now(),updated_at=now()
+       WHERE id=$1 AND status='queued'
+       RETURNING id`,
+      [job.job_id, agentId],
     );
     if (!claimed.rows[0]) continue;
 
-    ws.send(JSON.stringify({
-      type: 'print_job',
-      job: {
-        ...job,
-        download_url: `${env.publicBaseUrl}${agentDownloadPath(job.job_id)}`,
-      },
-    }));
+    try {
+      ws.send(JSON.stringify({
+        type: 'print_job',
+        job: {
+          ...job,
+          download_url: `${env.publicBaseUrl}${agentDownloadPath(job.job_id)}`,
+        },
+      }));
+    } catch (error) {
+      await query(
+        `UPDATE print_jobs
+         SET status=CASE WHEN retry_count+1 >= $2 THEN 'failed' ELSE 'queued' END,
+             claimed_agent_id=NULL,
+             claimed_at=NULL,
+             retry_count=retry_count+1,
+             updated_at=now(),
+             completed_at=CASE WHEN retry_count+1 >= $2 THEN now() ELSE completed_at END,
+             error_message=$3
+         WHERE id=$1 AND status='accepted' AND claimed_agent_id=$4`,
+        [job.job_id, MAX_RETRIES, 'Unable to dispatch job to agent.', agentId],
+      ).catch(() => {});
+    }
   }
 }
