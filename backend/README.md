@@ -12,6 +12,7 @@ The backend does not try to control USB/Wi-Fi printers directly. The Agent runs 
 
 - Node.js + Express
 - PostgreSQL
+- Supabase Storage for print files
 - JWT admin/staff/operator authentication
 - WebSocket (`ws`) for Agent communication
 - Multer for upload intake
@@ -20,11 +21,26 @@ The backend does not try to control USB/Wi-Fi printers directly. The Agent runs 
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Set `DATABASE_URL`, `JWT_SECRET`, `AGENT_SECRET_PEPPER`, and `CLIENT_ORIGIN`.
-3. Run `backend/sql/schema.sql` in the PostgreSQL/Supabase SQL editor.
-4. From the repository root run `npm install`.
-5. Start the API with `npm run dev:backend`.
-6. Create an admin with `ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD='a-strong-password' npm run seed:admin`.
+2. Set `DATABASE_URL`, `JWT_SECRET`, `AGENT_SECRET_PEPPER`, `CLIENT_ORIGIN`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`.
+3. In Supabase Storage, create a **private** bucket named `print-files` (or set `SUPABASE_STORAGE_BUCKET` to your chosen bucket name).
+4. Run `backend/sql/schema.sql` in the PostgreSQL/Supabase SQL editor.
+5. From the repository root run `npm install`.
+6. Start the API with `npm run dev:backend`.
+7. Create an admin with `ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD='a-strong-password' npm run seed:admin`.
+
+The Supabase service-role key is server-only. Never expose it through Vite or any `VITE_*` variable.
+
+## File storage
+
+Uploads are kept in Supabase Storage under paths such as:
+
+```text
+jobs/2026/09/<upload-id>/<safe-file-name>
+```
+
+The customer upload API stores the file in the private bucket and returns the storage path. PostgreSQL stores that path in `print_job_files`.
+
+The Windows Agent does not need Supabase credentials. It downloads a job through the authenticated PrintStation backend endpoint, which reads the corresponding private Storage object.
 
 ## Core endpoints
 
