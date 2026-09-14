@@ -7,6 +7,7 @@ import PrintUpload from './pages/Print/PrintUpload';
 import AdminAuth from './pages/Admin/Auth/AdminAuthSecure';
 import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard';
 import PrinterManagement from './pages/Admin/Printers/PrinterManagement';
+import AgentManagement from './pages/Admin/Agents/AgentManagement';
 import QrCodeManagement from './pages/Admin/QRCodes/QrCodeManagement';
 import PrintJob from './pages/Admin/PrintJobs/PrintJob';
 import Users from './pages/Admin/Users/Users';
@@ -18,7 +19,6 @@ export default function App() {
   return (
     <>
       <ApiLoader label="Processing your request..." />
-
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/print" element={<PrintScanner />} />
@@ -28,6 +28,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/printers" element={<PrinterManagement />} />
+          <Route path="/admin/agents" element={<AgentManagement />} />
           <Route path="/admin/qr-codes" element={<QrCodeManagement />} />
           <Route path="/admin/print-jobs" element={<PrintJob />} />
           <Route path="/admin/users" element={<Users />} />
