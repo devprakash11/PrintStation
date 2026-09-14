@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0d10" />
+    <title>PrintStation Agent</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="agent-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="PrintStation Agent home">
+          <span class="brand-mark">PS</span>
+          <span>
+            <strong>PrintStation</strong>
+            <small>Agent</small>
+          </span>
+        </a>
+        <div class="connection-pill is-online">
+          <span class="status-dot"></span>
+          <span>Online</span>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">LOCAL PRINT BRIDGE</p>
+          <h1>PrintStation Agent</h1>
+          <p class="hero-copy">
+            This computer is connected to PrintStation and ready to receive print jobs.
+          </p>
+        </div>
+        <div class="agent-badge">
+          <span class="badge-label">AGENT</span>
+          <strong>v1.0.0</strong>
+        </div>
+      </section>
+
+      <section class="stats-grid" aria-label="Agent overview">
+        <article class="stat-card">
+          <span class="stat-label">Computer</span>
+          <strong>PC-01</strong>
+          <span class="stat-meta">Windows</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Printers</span>
+          <strong>2</strong>
+          <span class="stat-meta">1 ready · 1 offline</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Current job</span>
+          <strong>Idle</strong>
+          <span class="stat-meta">No active print job</span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel printers-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">DEVICES</p>
+              <h2>Printers</h2>
+            </div>
+            <button class="icon-button" type="button" aria-label="Refresh printers">↻</button>
+          </div>
+
+          <div class="printer-list">
+            <div class="printer-row">
+              <div class="printer-icon">PR</div>
+              <div class="printer-info">
+                <strong>HP LaserJet Pro</strong>
+                <span>USB · Ready</span>
+              </div>
+              <span class="state ready"><i></i>Ready</span>
+            </div>
+            <div class="printer-row">
+              <div class="printer-icon">PR</div>
+              <div class="printer-info">
+                <strong>Canon LBP2900</strong>
+                <span>USB · Offline</span>
+              </div>
+              <span class="state offline"><i></i>Offline</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel connection-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CONNECTION</p>
+              <h2>Agent status</h2>
+            </div>
+          </div>
+
+          <div class="connection-status">
+            <div class="large-status-icon">✓</div>
+            <div>
+              <strong>Connected to PrintStation</strong>
+              <span>WebSocket connection is healthy</span>
+            </div>
+          </div>
+
+          <dl class="detail-list">
+            <div><dt>Agent ID</dt><dd>••••••••91a</dd></div>
+            <div><dt>Last sync</dt><dd>10 seconds ago</dd></div>
+            <div><dt>Backend</dt><dd>PrintStation API</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="panel activity-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">ACTIVITY</p>
+            <h2>Recent activity</h2>
+          </div>
+          <button class="text-button" type="button">View logs</button>
+        </div>
+        <div class="activity-list">
+          <div class="activity-row"><span class="activity-time">10:45:18</span><span class="activity-icon success">✓</span><span>Print job completed</span><code>JOB-1024</code></div>
+          <div class="activity-row"><span class="activity-time">10:45:04</span><span class="activity-icon">↓</span><span>Document downloaded</span><code>JOB-1024</code></div>
+          <div class="activity-row"><span class="activity-time">10:45:02</span><span class="activity-icon">+</span><span>Print job received</span><code>JOB-1024</code></div>
+          <div class="activity-row"><span class="activity-time">10:42:21</span><span class="activity-icon success">✓</span><span>Printer synchronized</span><code>HP LaserJet Pro</code></div>
+        </div>
+      </section>
+
+      <footer class="footer-actions">
+        <div>
+          <strong>PrintStation Agent</strong>
+          <span>Running on this computer</span>
+        </div>
+        <div class="action-group">
+          <button class="secondary-button" type="button">Settings</button>
+          <button class="primary-button" type="button">Test connection</button>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>
