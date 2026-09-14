@@ -1,12 +1,11 @@
+import http from 'node:http';
+import { WebSocketServer } from 'ws';
 import app from './app.js';
 import { env } from './config/env.js';
-import { pool } from './db/pool.js';
+import { registerAgentSocket } from './services/agentService.js';
 
-const server = app.listen(env.port, () => console.log(`PrintStation API running on http://localhost:${env.port}`));
-
-const shutdown = async (signal) => {
-  console.log(`${signal}: shutting down...`);
-  server.close(async () => { await pool.end(); process.exit(0); });
-};
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+const server=http.createServer(app);
+const wss=new WebSocketServer({server,path:'/ws/agent'});
+wss.on('connection',registerAgentSocket);
+server.listen(env.port,()=>console.log(`PrintStation API listening on :${env.port}`));
+process.on('SIGTERM',async()=>{server.close(()=>process.exit(0));});

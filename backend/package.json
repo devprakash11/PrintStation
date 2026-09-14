@@ -1,18 +1,15 @@
 {
   "name": "printstation-backend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "build": "echo 'Build complete'",
-    "vercel": "vercel dev",
-    "deploy": "vercel --prod",
+    "build": "echo Backend ready",
     "seed:admin": "node src/scripts/seedAdmin.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.115.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -22,10 +19,8 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.6",
     "pg": "^8.16.3",
+    "ws": "^8.18.3",
     "zod": "^4.0.17"
   }
-
 }
-

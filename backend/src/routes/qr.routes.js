@@ -1,15 +1,14 @@
 import { Router } from 'express';
-import { randomUUID } from 'crypto';
+import crypto from 'node:crypto';
+import { z } from 'zod';
 import { query } from '../db/pool.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
-const router=Router();
+import { requireAuth, requireRoles } from '../middleware/auth.js';
+import { env } from '../config/env.js';
 
-// Public endpoint used after a customer scans a printer QR code.
-router.get('/public/:token',async(req,res,next)=>{try{const r=await query(`SELECT q.id,q.token,q.label,q.expires_at,p.id AS printer_id,p.name AS printer_name,p.model,p.location,p.status FROM qr_codes q JOIN printers p ON p.id=q.printer_id WHERE q.token=$1 AND q.is_active=true`,[req.params.token]);if(!r.rowCount)return res.status(404).json({success:false,message:'QR code is invalid or inactive.'});const item=r.rows[0];if(item.expires_at&&new Date(item.expires_at)<new Date())return res.status(410).json({success:false,message:'QR code has expired.'});res.json({success:true,data:item});}catch(e){next(e);}});
-
-router.use(requireAuth,requireRole('admin','staff'));
-router.get('/',async(req,res,next)=>{try{const r=await query(`SELECT q.*,p.name AS printer_name FROM qr_codes q LEFT JOIN printers p ON p.id=q.printer_id ORDER BY q.created_at DESC`);res.json({success:true,data:r.rows});}catch(e){next(e);}});
-router.post('/',async(req,res,next)=>{try{const {printer_id,label,expires_at}=req.body;if(!printer_id||!label)return res.status(400).json({success:false,message:'printer_id and label are required.'});const token=randomUUID();const r=await query(`INSERT INTO qr_codes(printer_id,label,token,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING *`,[printer_id,label,token,expires_at||null,req.user.sub]);res.status(201).json({success:true,data:r.rows[0]});}catch(e){next(e);}});
-router.get('/:id',async(req,res,next)=>{try{const r=await query('SELECT * FROM qr_codes WHERE id=$1',[req.params.id]);if(!r.rowCount)return res.status(404).json({success:false,message:'QR code not found.'});res.json({success:true,data:r.rows[0]});}catch(e){next(e);}});
-router.delete('/:id',async(req,res,next)=>{try{await query('DELETE FROM qr_codes WHERE id=$1',[req.params.id]);res.status(204).end();}catch(e){next(e);}});
+const router = Router();
+router.get('/public/:token', async(req,res,next)=>{try{const {rows}=await query(`SELECT q.id,q.token,q.expires_at,q.is_active,p.id printer_id,p.name,p.model,p.status,p.is_enabled FROM qr_codes q JOIN printers p ON p.id=q.printer_id WHERE q.token=$1`,[req.params.token]); const row=rows[0]; if(!row || !row.is_active || (row.expires_at && new Date(row.expires_at)<new Date()) || !row.is_enabled) return res.status(404).json({success:false,message:'This print station is unavailable.'}); res.json({success:true,data:{printerId:row.printer_id,printerName:row.name,model:row.model,status:row.status,available:row.status==='online'}});}catch(e){next(e);}});
+router.use(requireAuth, requireRoles('admin','staff','operator'));
+router.get('/',async(req,res,next)=>{try{const {rows}=await query(`SELECT q.*,p.name printer_name FROM qr_codes q JOIN printers p ON p.id=q.printer_id ORDER BY q.created_at DESC`);res.json({success:true,data:rows});}catch(e){next(e);}});
+router.post('/',async(req,res,next)=>{try{const p=z.object({printerId:z.string().uuid(),label:z.string().max(120).optional().default(''),expiresAt:z.string().datetime().nullable().optional()}).parse(req.body);const token=crypto.randomUUID();const {rows}=await query('INSERT INTO qr_codes(printer_id,label,token,expires_at,is_active,created_by) VALUES($1,$2,$3,$4,true,$5) RETURNING *',[p.printerId,p.label,token,p.expiresAt||null,req.user.id]);res.status(201).json({success:true,data:{...rows[0],url:`${env.qrBaseUrl}?station=${token}`}});}catch(e){next(e);}});
+router.patch('/:id',async(req,res,next)=>{try{const p=z.object({isActive:z.boolean().optional(),expiresAt:z.string().datetime().nullable().optional(),label:z.string().max(120).optional()}).parse(req.body);const fields=[];const values=[];for(const [k,v] of Object.entries(p)){if(v===undefined)continue;const col={isActive:'is_active',expiresAt:'expires_at',label:'label'}[k];fields.push(`${col}=$${values.length+1}`);values.push(v);}if(!fields.length)return res.status(400).json({success:false,message:'No changes supplied.'});values.push(req.params.id);const {rows}=await query(`UPDATE qr_codes SET ${fields.join(',')} WHERE id=$${values.length} RETURNING *`,values);if(!rows[0])return res.status(404).json({success:false,message:'QR code not found.'});res.json({success:true,data:rows[0]});}catch(e){next(e);}});
 export default router;
