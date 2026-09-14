@@ -1,4 +1,6 @@
 import os from 'node:os';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import WebSocket from 'ws';
 import { config } from './config.js';
 import { discoverPrinters, printFile } from './printerService.js';
@@ -10,6 +12,7 @@ export class AgentClient {
     this.reconnectTimer = null;
     this.heartbeatTimer = null;
     this.printerTimer = null;
+    this.activeJobs = new Set();
   }
 
   start() {
@@ -27,11 +30,11 @@ export class AgentClient {
 
   connect() {
     if (this.closed) return;
-    console.log(`Connecting to PrintStation Agent API: ${config.wsUrl}`);
+    console.log(`Connecting to PrintStation API: ${config.wsUrl}`);
     this.ws = new WebSocket(config.wsUrl);
     this.ws.on('open', () => this.authenticate());
-    this.ws.on('message', (raw) => this.handleMessage(raw));
-    this.ws.on('error', (error) => console.error('[agent] WebSocket error:', error.message));
+    this.ws.on('message', raw => this.handleMessage(raw));
+    this.ws.on('error', error => console.error('[agent] WebSocket error:', error.message));
     this.ws.on('close', (code, reason) => {
       clearInterval(this.heartbeatTimer);
       clearInterval(this.printerTimer);
@@ -47,6 +50,7 @@ export class AgentClient {
   async handleMessage(raw) {
     let message;
     try { message = JSON.parse(raw.toString()); } catch { return; }
+
     if (message.type === 'authenticated') {
       console.log(`[agent] authenticated as ${message.agentId}`);
       clearInterval(this.heartbeatTimer);
@@ -56,10 +60,12 @@ export class AgentClient {
       this.printerTimer = setInterval(() => this.syncPrinters(), config.jobPollMs);
       return;
     }
+
     if (message.type === 'print_job') {
       await this.handlePrintJob(message.job);
       return;
     }
+
     if (message.type === 'error') console.error('[agent] server error:', message.message);
   }
 
@@ -73,18 +79,51 @@ export class AgentClient {
     }
   }
 
+  async downloadJobFile(job) {
+    if (!job.download_url) throw new Error('Print job has no download URL.');
+
+    await fs.mkdir(path.resolve(config.downloadDir), { recursive: true });
+    const fileName = String(job.file_name || `print-${job.job_id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const destination = path.resolve(config.downloadDir, `${job.job_id}-${fileName}`);
+
+    const response = await fetch(job.download_url, {
+      headers: {
+        'X-Agent-ID': config.agentId,
+        'X-Agent-Secret': config.agentSecret,
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`File download failed (${response.status})${text ? `: ${text}` : ''}`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    await fs.writeFile(destination, buffer, { flag: 'wx' });
+    return destination;
+  }
+
   async handlePrintJob(job) {
-    if (!job?.job_id || !job?.file_path) {
-      this.send({ type: 'job_status', jobId: job?.job_id, status: 'failed', error: 'Agent requires a local file_path to print.' });
+    if (!job?.job_id || !job?.system_printer_name || !job?.download_url) {
+      this.send({ type: 'job_status', jobId: job?.job_id, status: 'failed', error: 'Incomplete print job payload.' });
       return;
     }
+    if (this.activeJobs.has(job.job_id)) return;
+
+    this.activeJobs.add(job.job_id);
+    let localFile = null;
     try {
       this.send({ type: 'job_status', jobId: job.job_id, status: 'downloading' });
+      localFile = await this.downloadJobFile(job);
       this.send({ type: 'job_status', jobId: job.job_id, status: 'printing' });
-      await printFile(job.file_path, job.system_printer_name, job.copies);
+      await printFile(localFile, job.system_printer_name, job.copies);
       this.send({ type: 'job_status', jobId: job.job_id, status: 'completed' });
     } catch (error) {
+      console.error(`[agent] job ${job.job_id} failed:`, error.message);
       this.send({ type: 'job_status', jobId: job.job_id, status: 'failed', error: error.message });
+    } finally {
+      this.activeJobs.delete(job.job_id);
+      if (localFile) await fs.unlink(localFile).catch(() => {});
     }
   }
 
