@@ -18,22 +18,31 @@ import reportsRoutes from './routes/reports.routes.js';
 const app = express();
 app.set('trust proxy', 1);
 app.use(helmet());
+
 const origins = env.clientOrigin.split(',').map(v => v.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => !origin || origins.includes(origin) ? cb(null, true) : cb(new Error('CORS origin denied')),
   credentials: true,
 }));
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 
-app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false }), authRoutes);
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const uploadLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+const printLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const pairingLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+
+app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/agents/files', agentFilesRoutes);
+app.use('/api/v1/agents/pair', pairingLimiter);
 app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/printers', printerRoutes);
 app.use('/api/v1/qr-codes', qrRoutes);
+app.use('/api/v1/print-jobs/public', printLimiter);
 app.use('/api/v1/print-jobs', printJobRoutes);
-app.use('/api/v1/uploads', uploadRoutes);
+app.use('/api/v1/uploads', uploadLimiter, uploadRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/users', userRoutes);
 
