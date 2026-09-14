@@ -18,16 +18,17 @@ export const printJobService = {
     });
   },
 
-  uploadFiles(files) {
-    const formData = new FormData();
-    for (const file of files) {
-      formData.append('files', file);
-    }
-
-    return request('/uploads', {
-      method: 'POST',
-      body: formData,
-    });
+  async uploadFiles(files) {
+    return Promise.all(
+      Array.from(files || []).map((file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return request('/uploads', {
+          method: 'POST',
+          body: formData,
+        });
+      }),
+    );
   },
 };
 
