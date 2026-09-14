@@ -31,11 +31,25 @@ create table if not exists qr_codes (
  expires_at timestamptz, is_active boolean not null default true, created_by uuid references users(id) on delete set null, created_at timestamptz not null default now()
 );
 
+create table if not exists upload_assets (
+ id uuid primary key default gen_random_uuid(),
+ storage_path text not null unique,
+ file_name varchar(255) not null,
+ mime_type varchar(120) not null check(mime_type in ('application/pdf','image/jpeg','image/png','image/webp')),
+ file_size bigint not null check(file_size > 0),
+ expires_at timestamptz not null,
+ used_at timestamptz,
+ created_at timestamptz not null default now()
+);
+
 create table if not exists print_jobs (
  id uuid primary key default gen_random_uuid(), user_id uuid references users(id) on delete set null, printer_id uuid not null references printers(id) on delete restrict,
  copies integer not null default 1 check(copies between 1 and 100), pages integer not null default 1 check(pages between 1 and 1000),
  color_mode varchar(10) not null default 'bw' check(color_mode in ('color','bw')), paper_size varchar(30) not null default 'A4', orientation varchar(20) not null default 'portrait' check(orientation in ('portrait','landscape')),
  status varchar(20) not null default 'queued' check(status in ('queued','accepted','downloading','printing','completed','failed','cancelled')),
+ claimed_agent_id uuid references printer_agents(id) on delete set null,
+ claimed_at timestamptz,
+ retry_count integer not null default 0 check(retry_count >= 0),
  error_message text, started_at timestamptz, completed_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 
@@ -49,4 +63,6 @@ create index if not exists idx_printers_status on printers(status);
 create index if not exists idx_qr_token on qr_codes(token);
 create index if not exists idx_jobs_queue on print_jobs(printer_id,status,created_at);
 create index if not exists idx_jobs_created on print_jobs(created_at desc);
+create index if not exists idx_jobs_claim on print_jobs(claimed_agent_id,status,claimed_at);
 create index if not exists idx_agent_status on printer_agents(status);
+create index if not exists idx_upload_assets_expiry on upload_assets(expires_at,used_at);
