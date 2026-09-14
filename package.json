@@ -15,7 +15,7 @@
     "dev:agent": "npm run dev --workspace=agent",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build:backend --workspace=backend",
+    "build:backend": "npm run build --workspace=backend",
     "start": "npm run start --workspace=backend",
     "start:agent": "npm run start --workspace=agent",
     "seed:admin": "npm run seed:admin --workspace=backend"
