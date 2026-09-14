@@ -4,23 +4,26 @@ export const printJobService = {
   getAll() {
     return request('/print-jobs');
   },
+
   create(data) {
-    return request('/print-jobs', {
+    return request('/print-jobs/public', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
-  update(id, data) {
-    return request(`/print-jobs/${id}`, {
+
+  cancel(id) {
+    return request(`/print-jobs/${id}/cancel`, {
       method: 'PATCH',
-      body: JSON.stringify(data),
     });
   },
+
   uploadFiles(files) {
     const formData = new FormData();
     for (const file of files) {
       formData.append('files', file);
     }
+
     return request('/uploads', {
       method: 'POST',
       body: formData,
