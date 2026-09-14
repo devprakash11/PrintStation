@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import { query } from './db/pool.js';
 import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/users.routes.js';
 import agentRoutes from './routes/agents.routes.js';
 import agentFilesRoutes from './routes/agentFiles.routes.js';
 import printerRoutes from './routes/printers.routes.js';
@@ -34,6 +35,7 @@ app.use('/api/v1/qr-codes', qrRoutes);
 app.use('/api/v1/print-jobs', printJobRoutes);
 app.use('/api/v1/uploads', uploadRoutes);
 app.use('/api/v1/reports', reportsRoutes);
+app.use('/api/v1/users', userRoutes);
 
 app.get('/api/v1/health', async (req, res, next) => {
   try {
