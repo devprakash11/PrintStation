@@ -53,6 +53,12 @@ export default function PrintUpload() {
   }
 
   useEffect(() => {
+    if (!printer?.stationToken) {
+      window.location.replace('/print');
+    }
+  }, [printer?.stationToken]);
+
+  useEffect(() => {
     filesRef.current = files;
   }, [files]);
 
@@ -83,10 +89,7 @@ export default function PrintUpload() {
     if (!validFiles.length) return;
 
     setFiles((currentFiles) => {
-      const existingKeys = new Set(
-        currentFiles.map(({ file }) => `${file.name}-${file.size}-${file.lastModified}`),
-      );
-
+      const existingKeys = new Set(currentFiles.map(({ file }) => `${file.name}-${file.size}-${file.lastModified}`));
       const newItems = validFiles
         .filter((file) => {
           const key = `${file.name}-${file.size}-${file.lastModified}`;
@@ -100,7 +103,6 @@ export default function PrintUpload() {
         setActiveFileIndex(0);
         resetPrintSettings();
       }
-
       return [...currentFiles, ...newItems];
     });
 
@@ -117,7 +119,6 @@ export default function PrintUpload() {
     setFiles((currentFiles) => {
       const item = currentFiles[indexToRemove];
       if (item) URL.revokeObjectURL(item.previewUrl);
-
       const nextFiles = currentFiles.filter((_, index) => index !== indexToRemove);
 
       if (!nextFiles.length) {
@@ -128,12 +129,9 @@ export default function PrintUpload() {
 
       setActiveFileIndex((currentIndex) => {
         if (indexToRemove < currentIndex) return currentIndex - 1;
-        if (indexToRemove === currentIndex) {
-          return Math.min(currentIndex, nextFiles.length - 1);
-        }
+        if (indexToRemove === currentIndex) return Math.min(currentIndex, nextFiles.length - 1);
         return currentIndex;
       });
-
       return nextFiles;
     });
   };
@@ -142,186 +140,61 @@ export default function PrintUpload() {
   const activeFile = activeItem?.file || null;
   const activePreviewUrl = activeItem?.previewUrl || '';
 
+  if (!printer?.stationToken) return null;
+
   return (
     <div className="print-flow-page">
       <header className="print-flow-header">
-        <a href="/print" className="flow-back-link">
-          <ArrowLeft size={18} />
-          Back
-        </a>
-
-        <div className="flow-brand">
-          <Printer size={24} />
-          <span>PrintStation</span>
-        </div>
-
+        <a href="/print" className="flow-back-link"><ArrowLeft size={18} /> Back</a>
+        <div className="flow-brand"><Printer size={24} /><span>PrintStation</span></div>
         <div className="flow-step">Step 2 of 2</div>
       </header>
 
       <main className="upload-step-main container">
         <div className="scanner-heading">
-          <div className="flow-eyebrow">
-            <span />
-            Printer connected
-          </div>
-
+          <div className="flow-eyebrow"><span /> Printer connected</div>
           <h1>Upload your documents</h1>
-          <p>
-            Upload multiple PDF, JPG, or PNG files at once, then preview and configure your print settings.
-          </p>
+          <p>Upload multiple PDF, JPG, or PNG files at once, then preview and configure your print settings.</p>
         </div>
 
         {!files.length ? (
-          <section
-            className={`document-upload-card ${isDragging ? 'is-dragging' : ''}`}
-            onDragEnter={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragOver={(event) => event.preventDefault()}
-            onDragLeave={(event) => {
-              if (event.currentTarget === event.target) setIsDragging(false);
-            }}
-            onDrop={handleDrop}
-          >
-            <div className="document-upload-icon">
-              <FileUp size={34} />
-            </div>
-
+          <section className={`document-upload-card ${isDragging ? 'is-dragging' : ''}`} onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={(event) => { if (event.currentTarget === event.target) setIsDragging(false); }} onDrop={handleDrop}>
+            <div className="document-upload-icon"><FileUp size={34} /></div>
             <h2>Drag &amp; drop your documents</h2>
             <p>Select or drop multiple files to upload them together</p>
-
             <div className="upload-divider"><span>or</span></div>
-
-            <input
-              ref={inputRef}
-              type="file"
-              accept="application/pdf,image/jpeg,image/png"
-              multiple
-              hidden
-              onChange={(event) => addFiles(event.target.files)}
-            />
-
-            <button
-              className="manual-upload-button"
-              type="button"
-              onClick={() => inputRef.current?.click()}
-            >
-              <FolderOpen size={19} />
-              Select Documents
-            </button>
-
-            <span className="upload-format-note">
-              Supported formats: PDF, JPG, PNG • Multiple files supported
-            </span>
-
+            <input ref={inputRef} type="file" accept="application/pdf,image/jpeg,image/png" multiple hidden onChange={(event) => addFiles(event.target.files)} />
+            <button className="manual-upload-button" type="button" onClick={() => inputRef.current?.click()}><FolderOpen size={19} /> Select Documents</button>
+            <span className="upload-format-note">Supported formats: PDF, JPG, PNG • Multiple files supported</span>
             {error && <p className="upload-error">{error}</p>}
           </section>
         ) : (
           <>
             <section className="uploaded-files-panel" aria-label="Uploaded documents">
               <div className="uploaded-files-header">
-                <div>
-                  <span className="uploaded-files-title">
-                    <FileText size={17} />
-                    Uploaded Documents
-                  </span>
-                  <small>
-                    {files.length} {files.length === 1 ? 'document' : 'documents'}
-                  </small>
-                </div>
-
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png"
-                  multiple
-                  hidden
-                  onChange={(event) => addFiles(event.target.files)}
-                />
-
-                <button
-                  type="button"
-                  className="add-files-button"
-                  onClick={() => inputRef.current?.click()}
-                >
-                  <Plus size={17} />
-                  Add Files
-                </button>
+                <div><span className="uploaded-files-title"><FileText size={17} /> Uploaded Documents</span><small>{files.length} {files.length === 1 ? 'document' : 'documents'}</small></div>
+                <input ref={inputRef} type="file" accept="application/pdf,image/jpeg,image/png" multiple hidden onChange={(event) => addFiles(event.target.files)} />
+                <button type="button" className="add-files-button" onClick={() => inputRef.current?.click()}><Plus size={17} /> Add Files</button>
               </div>
 
               <div className="uploaded-files-list">
                 {files.map(({ file }, index) => (
-                  <div
-                    key={`${file.name}-${file.size}-${file.lastModified}`}
-                    className={`uploaded-file-item ${index === activeFileIndex ? 'is-active' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveFileIndex(index)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setActiveFileIndex(index);
-                      }
-                    }}
-                  >
-                    <span className="uploaded-file-icon" aria-hidden="true">
-                      <FileText size={18} />
-                    </span>
-                    <span className="uploaded-file-details">
-                      <strong title={file.name}>{file.name}</strong>
-                      <small>{formatFileSize(file.size)}</small>
-                    </span>
+                  <div key={`${file.name}-${file.size}-${file.lastModified}`} className={`uploaded-file-item ${index === activeFileIndex ? 'is-active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveFileIndex(index)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActiveFileIndex(index); } }}>
+                    <span className="uploaded-file-icon" aria-hidden="true"><FileText size={18} /></span>
+                    <span className="uploaded-file-details"><strong title={file.name}>{file.name}</strong><small>{formatFileSize(file.size)}</small></span>
                     <span className="uploaded-file-index">{index + 1}</span>
-                    <button
-                      type="button"
-                      className="uploaded-file-remove"
-                      aria-label={`Remove ${file.name}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeFile(index);
-                      }}
-                    >
-                      <X size={16} />
-                    </button>
+                    <button type="button" className="uploaded-file-remove" aria-label={`Remove ${file.name}`} onClick={(event) => { event.stopPropagation(); removeFile(index); }}><X size={16} /></button>
                   </div>
                 ))}
               </div>
-
               {error && <p className="upload-error">{error}</p>}
             </section>
 
-            <PrintSetting
-              file={activeFile}
-              previewUrl={activePreviewUrl}
-              files={files}
-              activeFileIndex={activeFileIndex}
-              onSelectFile={setActiveFileIndex}
-              pages={pages}
-              setPages={setPages}
-              customPages={customPages}
-              setCustomPages={setCustomPages}
-              copies={copies}
-              setCopies={setCopies}
-              previewPage={previewPage}
-              setPreviewPage={setPreviewPage}
-              colorMode={colorMode}
-              setColorMode={setColorMode}
-              paperSize={paperSize}
-              setPaperSize={setPaperSize}
-              orientation={orientation}
-              setOrientation={setOrientation}
-              onRemove={() => removeFile(activeFileIndex)}
-            />
+            <PrintSetting file={activeFile} previewUrl={activePreviewUrl} files={files} activeFileIndex={activeFileIndex} onSelectFile={setActiveFileIndex} pages={pages} setPages={setPages} customPages={customPages} setCustomPages={setCustomPages} copies={copies} setCopies={setCopies} previewPage={previewPage} setPreviewPage={setPreviewPage} colorMode={colorMode} setColorMode={setColorMode} paperSize={paperSize} setPaperSize={setPaperSize} orientation={orientation} setOrientation={setOrientation} onRemove={() => removeFile(activeFileIndex)} />
           </>
         )}
 
-        {printer && (
-          <div className="connected-printer upload-printer-status">
-            <CheckCircle2 size={18} />
-            <span>{printer.name} connected</span>
-          </div>
-        )}
+        <div className="connected-printer upload-printer-status"><CheckCircle2 size={18} /><span>{printer.name} connected</span></div>
       </main>
     </div>
   );
