@@ -8,8 +8,12 @@ The PrintStation Agent is the Windows bridge between the PrintStation backend an
 - Authenticates using a paired Agent ID and secret.
 - Discovers Windows printers through `Get-Printer`.
 - Reports printer status and basic driver/port capabilities.
-- Receives print-job status commands.
-- Prints a local file through the Windows `PrintTo` shell verb.
+- Receives queued print jobs.
+- Authenticates back to the backend to download the job file.
+- Stores the file temporarily on the workstation.
+- Prints the file through the Windows `PrintTo` shell verb.
+- Reports downloading, printing, completed, and failed states.
+- Deletes the temporary local job file after processing.
 - Reconnects automatically when the backend connection drops.
 
 ## Requirements
@@ -56,12 +60,23 @@ npm run dev
 
 The Agent uses PowerShell's `Get-Printer` command. It reports the Windows printer name, driver, port, shared state, offline state, and a normalized PrintStation status.
 
-## Current print execution boundary
+## Print flow
 
-The Agent can execute a print job when the job contains a **local `file_path`**. The current backend queue sends `storage_path` because permanent object storage and Agent-authenticated file download are still being integrated. Therefore, remote customer files are **not yet production-printable end-to-end**.
+```text
+Backend queue
+   -> WebSocket print_job
+   -> Agent authenticates download request
+   -> Backend verifies Agent owns the printer/job
+   -> File downloaded to agent/data/jobs
+   -> Windows PrintTo
+   -> completed/failed status sent to backend
+   -> temporary file removed
+```
 
-The next backend integration must provide a secure, short-lived download mechanism from object storage to the Agent, after which `handlePrintJob()` can download the file into `data/jobs/` and pass that local path to the Windows print subsystem.
+## Important production note
+
+The current backend stores uploaded files on its local filesystem. This makes the complete flow functional for a backend that can persist its filesystem and is suitable for local testing. For a production deployment where the backend filesystem is ephemeral or horizontally scaled, replace the local upload store with private object storage such as Supabase Storage and keep the same authenticated Agent download contract.
 
 ## Security
 
-Never commit `.env`. Never put the Agent secret in frontend code. Use `wss://` and HTTPS when the backend is deployed.
+Never commit `.env`. Never put the Agent secret in frontend code. The Agent file endpoint requires both the Agent ID and secret and verifies that the requested job belongs to a printer assigned to that Agent. Use `wss://` and HTTPS when the backend is deployed.
