@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend": "npm --prefix ../backend run dev",
+    "seed:admin": "npm --prefix ../backend run seed:admin"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
