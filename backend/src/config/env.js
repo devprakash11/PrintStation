@@ -1,6 +1,13 @@
 import 'dotenv/config';
 
-const required = ['DATABASE_URL', 'JWT_SECRET', 'AGENT_SECRET_PEPPER'];
+const required = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'AGENT_SECRET_PEPPER',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+];
+
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
 }
@@ -15,5 +22,7 @@ export const env = {
   agentSecretPepper: process.env.AGENT_SECRET_PEPPER,
   qrBaseUrl: process.env.QR_BASE_URL || 'http://localhost:5173/print',
   maxFileSizeMb: Number(process.env.MAX_FILE_SIZE_MB || 20),
-  uploadDir: process.env.UPLOAD_DIR || './data/uploads',
+  supabaseUrl: process.env.SUPABASE_URL.replace(/\/$/, ''),
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET || 'print-files',
 };
