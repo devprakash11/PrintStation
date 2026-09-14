@@ -1,12 +1,13 @@
 {
   "name": "printstation-backend",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
+    "start": "npm run migrate && node src/server.js",
     "build": "echo Backend ready",
+    "migrate": "node src/scripts/migrate.js",
     "seed:admin": "node src/scripts/seedAdmin.js"
   },
   "dependencies": {
@@ -15,7 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "express-rate-limit": "^8.0.1",
+    "express-rate-limit": "^8.0.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
