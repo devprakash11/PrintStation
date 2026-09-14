@@ -1,23 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, CheckCircle2, FileUp, LoaderCircle, QrCode, ShieldCheck } from 'lucide-react';
 import '../../styles/allPage.css';
+import { qrCodeService } from '../../services/qrCodeService.js';
 
 const QR_SCANNER_URL = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 
-function parsePrinterQr(value) {
+function parseStationToken(value) {
   const raw = String(value || '').trim();
   if (!raw) return null;
+
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && (parsed.printerId || parsed.id || parsed.model || parsed.name)) {
-      return { id: parsed.printerId || parsed.id || 'Unknown printer', name: parsed.name || parsed.model || 'PrintStation Printer', model: parsed.model || '' };
-    }
+    return parsed?.token || parsed?.stationToken || null;
   } catch {}
+
   if (raw.toLowerCase().startsWith('printstation:')) {
-    const parts = raw.split(':');
-    return { id: parts[1] || raw, name: parts[2] || 'PrintStation Printer', model: parts.slice(3).join(':') || '' };
+    return raw.split(':')[1] || null;
   }
-  return { id: raw, name: 'PrintStation Printer', model: '' };
+
+  try {
+    const url = new URL(raw);
+    return url.searchParams.get('station') || url.searchParams.get('token') || url.pathname.split('/').filter(Boolean).pop() || null;
+  } catch {
+    return raw;
+  }
 }
 
 function loadQrScannerLibrary() {
@@ -40,6 +46,7 @@ function loadQrScannerLibrary() {
 
 export default function PrintScanner() {
   const scannerRef = useRef(null);
+  const handledScanRef = useRef(false);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [printer, setPrinter] = useState(null);
@@ -55,16 +62,45 @@ export default function PrintScanner() {
         scanner = new Html5Qrcode('printstation-qr-reader', { verbose: false });
         scannerRef.current = scanner;
         setStatus('scanning');
+
         await scanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: (w, h) => { const size = Math.min(Math.floor(Math.min(w, h) * 0.68), 300); return { width: size, height: size }; }, aspectRatio: 1, disableFlip: false },
           async (decodedText) => {
-            if (cancelled || printer) return;
-            const detected = parsePrinterQr(decodedText);
-            if (!detected) return;
-            setPrinter(detected);
-            setStatus('connected');
-            try { await scanner.stop(); } catch {}
+            if (cancelled || handledScanRef.current) return;
+            const stationToken = parseStationToken(decodedText);
+            if (!stationToken) return;
+
+            handledScanRef.current = true;
+            setStatus('loading');
+            setError('');
+
+            try {
+              const response = await qrCodeService.getPublic(stationToken);
+              const station = response?.data;
+              if (!station?.printerId) throw new Error('Invalid print station.');
+
+              const detected = {
+                id: station.printerId,
+                stationToken,
+                name: station.printerName || 'PrintStation Printer',
+                model: station.model || '',
+                status: station.status,
+                available: station.available,
+              };
+
+              if (!detected.available) throw new Error('This printer is currently unavailable.');
+              if (cancelled) return;
+
+              setPrinter(detected);
+              setStatus('connected');
+              try { await scanner.stop(); } catch {}
+            } catch (scanError) {
+              handledScanRef.current = false;
+              if (cancelled) return;
+              setStatus('error');
+              setError(scanError?.message || 'This QR code is not a valid PrintStation printer.');
+            }
           },
           () => {},
         );
@@ -78,6 +114,7 @@ export default function PrintScanner() {
         else setError('Unable to start the camera. Use HTTPS or localhost and allow camera access.');
       }
     }
+
     startScanner();
     return () => {
       cancelled = true;
@@ -87,7 +124,7 @@ export default function PrintScanner() {
   }, []);
 
   function handleNext() {
-    if (!printer) return;
+    if (!printer?.stationToken) return;
     sessionStorage.setItem('printstation_printer', JSON.stringify(printer));
     window.location.href = '/print/upload';
   }
@@ -117,11 +154,11 @@ export default function PrintScanner() {
                 <span className="scan-corner top-left" /><span className="scan-corner top-right" /><span className="scan-corner bottom-left" /><span className="scan-corner bottom-right" />
                 {isScanning && <span className="scan-line" />}
               </div>
-              {status === 'loading' && <div className="scanner-state"><LoaderCircle className="spin" size={30} /><strong>Starting camera…</strong></div>}
-              {status === 'error' && <div className="scanner-state"><Camera size={30} /><strong>Camera access needed</strong><span>{error}</span><button type="button" className="secondary-button" onClick={() => window.location.reload()}>Try again</button></div>}
+              {status === 'loading' && <div className="scanner-state"><LoaderCircle className="spin" size={30} /><strong>{printer ? 'Checking printer…' : 'Starting camera…'}</strong></div>}
+              {status === 'error' && <div className="scanner-state"><Camera size={30} /><strong>Unable to connect</strong><span>{error}</span><button type="button" className="secondary-button" onClick={() => window.location.reload()}>Try again</button></div>}
               {status === 'connected' && <div className="scanner-success"><CheckCircle2 size={38} /><strong>Printer found</strong></div>}
             </div>
-            <div className="scanner-status-row"><span className={`scanner-status-dot ${isScanning ? 'is-live' : ''}`} /><span>{status === 'connected' ? 'Printer detected successfully' : 'Scanning with your camera…'}</span></div>
+            <div className="scanner-status-row"><span className={`scanner-status-dot ${isScanning ? 'is-live' : ''}`} /><span>{status === 'connected' ? 'Printer verified successfully' : 'Scanning with your camera…'}</span></div>
           </section>
 
           <aside className="scanner-info">
@@ -132,7 +169,7 @@ export default function PrintScanner() {
               <li><span>2</span><div><strong>Allow camera access</strong><p>When prompted, allow PrintStation to use your camera.</p></div></li>
               <li><span>3</span><div><strong>Scan and continue</strong><p>Keep the QR code inside the frame, then tap Next.</p></div></li>
             </ol>
-            <div className="secure-note"><ShieldCheck size={18} /><span>Camera access is used only for scanning the printer QR code.</span></div>
+            <div className="secure-note"><ShieldCheck size={18} /><span>The QR token is verified by PrintStation before printing.</span></div>
           </aside>
         </div>
 
