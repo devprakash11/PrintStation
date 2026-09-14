@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { z } from 'zod';
-import { query } from '../db/pool.js';
+import { pool, query } from '../db/pool.js';
 import { requireAuth, signUser } from '../middleware/auth.js';
 
 const router = Router();
@@ -29,26 +29,39 @@ router.post('/login', async (req, res, next) => {
 router.post('/signup', async (req, res, next) => {
   try {
     const p = signupSchema.parse(req.body);
-    const countResult = await query('SELECT COUNT(*)::int AS count FROM users');
-    if (countResult.rows[0].count > 0) {
-      return res.status(403).json({
-        success: false,
-        message: 'Public signup is disabled. An administrator must create your account.',
-      });
-    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [918273645]);
+      const countResult = await client.query('SELECT COUNT(*)::int AS count FROM users');
+      if (countResult.rows[0].count > 0) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({
+          success: false,
+          message: 'Public signup is disabled. An administrator must create your account.',
+        });
+      }
 
-    const hash = await bcrypt.hash(p.password, 12);
-    const { rows } = await query(`
-      INSERT INTO users(name,email,password_hash,role,status)
-      VALUES($1,lower($2),$3,'admin','active')
-      RETURNING id,name,email,role,status,created_at
-    `, [p.name, p.email, hash]);
-    const user = rows[0];
-    res.status(201).json({
-      success: true,
-      data: { token: signUser(user), user },
-      message: 'Administrator account created successfully.',
-    });
+      const hash = await bcrypt.hash(p.password, 12);
+      const { rows } = await client.query(`
+        INSERT INTO users(name,email,password_hash,role,status)
+        VALUES($1,lower($2),$3,'admin','active')
+        RETURNING id,name,email,role,status,created_at
+      `, [p.name, p.email, hash]);
+      await client.query('COMMIT');
+
+      const user = rows[0];
+      res.status(201).json({
+        success: true,
+        data: { token: signUser(user), user },
+        message: 'Administrator account created successfully.',
+      });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) { next(error); }
 });
 
