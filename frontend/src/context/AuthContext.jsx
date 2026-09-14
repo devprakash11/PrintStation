@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await authService.getMe();
       const currentUser = response?.data ?? null;
-      if (!currentUser || currentUser.status === 'suspended') throw new Error('Session is no longer valid.');
+      if (!currentUser || currentUser.status !== 'active') throw new Error('Session is no longer valid.');
       authService.saveSession(currentUser, token);
       setUser(currentUser);
       setStatus('authenticated');
@@ -51,15 +51,6 @@ export function AuthProvider({ children }) {
     return response;
   }, []);
 
-  const signup = useCallback(async (credentials) => {
-    const response = await authService.signup(credentials);
-    const currentUser = response?.data?.user;
-    if (!currentUser) throw new Error('Account was created but no user session was returned.');
-    setUser(currentUser);
-    setStatus('authenticated');
-    return response;
-  }, []);
-
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
@@ -72,10 +63,9 @@ export function AuthProvider({ children }) {
     isAuthenticated: status === 'authenticated',
     isLoading: status === 'loading',
     login,
-    signup,
     logout,
     refreshUser,
-  }), [user, status, login, signup, logout, refreshUser]);
+  }), [user, status, login, logout, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
