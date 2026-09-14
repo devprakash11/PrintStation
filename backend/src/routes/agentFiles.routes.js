@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import fs from 'node:fs';
-import path from 'node:path';
 import { env } from '../config/env.js';
 import { authenticateAgent } from '../services/agentService.js';
 import { query } from '../db/pool.js';
+import { downloadPrintFile } from '../storage/supabaseStorage.js';
 
 const router = Router();
 
@@ -25,20 +24,13 @@ router.get('/:jobId', async (req, res, next) => {
     const file = rows[0];
     if (!file) return res.status(404).json({ success: false, message: 'Print job file not found.' });
 
-    const root = path.resolve(env.uploadDir);
-    const filePath = path.resolve(root, file.storage_path);
-    if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
-      return res.status(400).json({ success: false, message: 'Invalid storage path.' });
-    }
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, message: 'Stored print file is missing.' });
-    }
+    const buffer = await downloadPrintFile(file.storage_path);
 
     res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
     res.setHeader('Content-Length', String(file.file_size));
     res.setHeader('Content-Disposition', `attachment; filename="${String(file.file_name).replace(/[^a-zA-Z0-9._-]/g, '_')}"`);
-    return fs.createReadStream(filePath).pipe(res);
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.end(buffer);
   } catch (error) {
     next(error);
   }
