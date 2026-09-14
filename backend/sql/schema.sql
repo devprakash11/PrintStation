@@ -63,6 +63,7 @@ create index if not exists idx_printers_status on printers(status);
 create index if not exists idx_qr_token on qr_codes(token);
 create index if not exists idx_jobs_queue on print_jobs(printer_id,status,created_at);
 create index if not exists idx_jobs_created on print_jobs(created_at desc);
-create index if not exists idx_jobs_claim on print_jobs(claimed_agent_id,status,claimed_at);
+-- idx_jobs_claim is intentionally created by the production-hardening migration.
+-- This keeps upgrades safe when an existing print_jobs table predates claimed_agent_id.
 create index if not exists idx_agent_status on printer_agents(status);
 create index if not exists idx_upload_assets_expiry on upload_assets(expires_at,used_at);
