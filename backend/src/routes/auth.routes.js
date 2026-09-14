@@ -30,18 +30,24 @@ router.post('/signup', async (req, res, next) => {
   try {
     const p = signupSchema.parse(req.body);
     const countResult = await query('SELECT COUNT(*)::int AS count FROM users');
-    const role = countResult.rows[0].count === 0 ? 'admin' : 'staff';
+    if (countResult.rows[0].count > 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Public signup is disabled. An administrator must create your account.',
+      });
+    }
+
     const hash = await bcrypt.hash(p.password, 12);
     const { rows } = await query(`
       INSERT INTO users(name,email,password_hash,role,status)
-      VALUES($1,lower($2),$3,$4,'active')
+      VALUES($1,lower($2),$3,'admin','active')
       RETURNING id,name,email,role,status,created_at
-    `, [p.name, p.email, hash, role]);
+    `, [p.name, p.email, hash]);
     const user = rows[0];
     res.status(201).json({
       success: true,
       data: { token: signUser(user), user },
-      message: role === 'admin' ? 'Administrator account created successfully.' : 'Account created successfully. Staff access granted.'
+      message: 'Administrator account created successfully.',
     });
   } catch (error) { next(error); }
 });
